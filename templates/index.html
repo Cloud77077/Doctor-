@@ -3,783 +3,413 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>OTP Doctor</title>
+<title>OTP Manager</title>
 <style>
-  /* ── TOKENS ─────────────────────────────────────────── */
-  :root {
-    --bg:        #F5F0E8;
-    --surface:   #FDFAF4;
-    --surface2:  #EDE8DC;
-    --border:    #D6CFBF;
-    --accent:    #5C8A6E;
-    --accent2:   #A0522D;
-    --danger:    #C0392B;
-    --warn:      #D4870A;
-    --text:      #2C2416;
-    --muted:     #7A6F5E;
-    --green:     #2E7D52;
-    --greenlt:   #E6F4EC;
-    --radius:    10px;
-    --shadow:    0 2px 12px rgba(0,0,0,0.08);
-  }
+:root {
+  --bg:       #F5F0E8;
+  --surface:  #FDFAF4;
+  --surface2: #EDE8DC;
+  --border:   #D6CFBF;
+  --accent:   #5C8A6E;
+  --accent2:  #A0522D;
+  --danger:   #C0392B;
+  --warn:     #D4870A;
+  --text:     #2C2416;
+  --muted:    #7A6F5E;
+  --green:    #2E7D52;
+  --greenlt:  #E6F4EC;
+  --radius:   10px;
+  --shadow:   0 2px 12px rgba(0,0,0,0.08);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:15px;line-height:1.5;}
+button{cursor:pointer;border:none;font:inherit;}
+input,select{font:inherit;}
 
-  /* ── RESET ──────────────────────────────────────────── */
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-  body {
-    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    min-height: 100vh;
-    font-size: 15px;
-    line-height: 1.5;
-  }
-  button { cursor: pointer; border: none; font: inherit; }
-  input, select { font: inherit; }
-  a { color: inherit; text-decoration: none; }
+/* HEADER */
+header{background:var(--surface);border-bottom:1px solid var(--border);padding:12px 16px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:100;box-shadow:var(--shadow);}
+.logo{font-size:19px;font-weight:700;color:var(--accent);letter-spacing:-0.5px;}
+.logo span{color:var(--accent2);}
+.site-badge{font-size:11px;font-weight:700;border-radius:999px;padding:2px 9px;border:1.5px solid;}
+.site-badge.od{background:#e8f4ee;color:var(--green);border-color:var(--green);}
+.site-badge.os{background:#eef0f8;color:#3a5a9a;border-color:#3a5a9a;}
+.balance-pill{margin-left:auto;background:var(--greenlt);color:var(--green);border:1.5px solid var(--green);border-radius:999px;padding:5px 14px;font-weight:700;font-size:14px;display:flex;align-items:center;gap:4px;cursor:pointer;transition:background .15s;white-space:nowrap;}
+.balance-pill:hover{background:#c6e8d5;}
 
-  /* ── HEADER ─────────────────────────────────────────── */
-  header {
-    background: var(--surface);
-    border-bottom: 1px solid var(--border);
-    padding: 12px 16px;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    position: sticky;
-    top: 0;
-    z-index: 100;
-    box-shadow: var(--shadow);
-  }
-  .logo {
-    font-size: 20px;
-    font-weight: 700;
-    color: var(--accent);
-    letter-spacing: -0.5px;
-  }
-  .logo span { color: var(--accent2); }
-  .balance-pill {
-    margin-left: auto;
-    background: var(--greenlt);
-    color: var(--green);
-    border: 1.5px solid var(--green);
-    border-radius: 999px;
-    padding: 5px 14px;
-    font-weight: 700;
-    font-size: 15px;
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    cursor: pointer;
-    transition: background 0.15s;
-  }
-  .balance-pill:hover { background: #c6e8d5; }
-  .balance-pill .rupee { font-size: 13px; }
+/* TOAST */
+#toast{position:fixed;top:68px;left:50%;transform:translateX(-50%) translateY(-16px);background:var(--text);color:#fff;padding:9px 20px;border-radius:999px;font-size:13px;font-weight:600;opacity:0;pointer-events:none;transition:opacity .22s,transform .22s;z-index:999;white-space:nowrap;max-width:92vw;}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+#toast.success{background:var(--green);}
+#toast.error{background:var(--danger);}
+#toast.warn{background:var(--warn);}
 
-  /* ── TOAST ──────────────────────────────────────────── */
-  #toast {
-    position: fixed;
-    top: 70px;
-    left: 50%;
-    transform: translateX(-50%) translateY(-20px);
-    background: var(--text);
-    color: #fff;
-    padding: 10px 22px;
-    border-radius: 999px;
-    font-size: 14px;
-    font-weight: 500;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.25s, transform 0.25s;
-    z-index: 999;
-    white-space: nowrap;
-    max-width: 90vw;
-  }
-  #toast.show {
-    opacity: 1;
-    transform: translateX(-50%) translateY(0);
-  }
-  #toast.success { background: var(--green); }
-  #toast.error   { background: var(--danger); }
-  #toast.warn    { background: var(--warn); }
+/* SETUP */
+#setup-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:calc(100vh - 58px);padding:24px 16px;}
+.setup-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:28px 24px;width:100%;max-width:440px;box-shadow:var(--shadow);}
+.setup-card h2{font-size:21px;font-weight:700;color:var(--accent);margin-bottom:4px;}
+.setup-card .sub{color:var(--muted);font-size:13px;margin-bottom:20px;}
 
-  /* ── SETUP SCREEN ────────────────────────────────────── */
-  #setup-screen {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    min-height: calc(100vh - 60px);
-    padding: 24px 16px;
-  }
-  .setup-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 32px 28px;
-    width: 100%;
-    max-width: 440px;
-    box-shadow: var(--shadow);
-    text-align: center;
-  }
-  .setup-card h2 {
-    font-size: 22px;
-    font-weight: 700;
-    margin-bottom: 6px;
-    color: var(--accent);
-  }
-  .setup-card p {
-    color: var(--muted);
-    font-size: 14px;
-    margin-bottom: 24px;
-  }
-  .input-group {
-    display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
-  }
-  .input-group input {
-    flex: 1;
-    min-width: 0;
-    border: 1.5px solid var(--border);
-    background: var(--bg);
-    border-radius: var(--radius);
-    padding: 11px 14px;
-    font-size: 14px;
-    outline: none;
-    transition: border-color 0.15s;
-  }
-  .input-group input:focus { border-color: var(--accent); }
-  .btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 11px 20px;
-    border-radius: var(--radius);
-    font-weight: 600;
-    font-size: 14px;
-    transition: filter 0.15s, transform 0.1s;
-    white-space: nowrap;
-  }
-  .btn:active { transform: scale(0.97); }
-  .btn-primary { background: var(--accent); color: #fff; }
-  .btn-primary:hover { filter: brightness(1.1); }
-  .btn-danger  { background: var(--danger); color: #fff; }
-  .btn-danger:hover { filter: brightness(1.1); }
-  .btn-warn    { background: var(--warn); color: #fff; }
-  .btn-warn:hover { filter: brightness(1.1); }
-  .btn-ghost   { background: var(--surface2); color: var(--text); border: 1.5px solid var(--border); }
-  .btn-ghost:hover { filter: brightness(0.97); }
-  .btn-green   { background: var(--green); color: #fff; }
-  .btn-green:hover { filter: brightness(1.1); }
-  .btn-sm { padding: 7px 13px; font-size: 13px; }
-  .btn-full { width: 100%; justify-content: center; margin-top: 8px; }
+/* SITE PICKER */
+.site-picker{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px;}
+.site-pick-btn{padding:14px 10px;border-radius:var(--radius);border:2px solid var(--border);background:var(--bg);text-align:center;cursor:pointer;transition:all .15s;}
+.site-pick-btn:hover{border-color:var(--accent);}
+.site-pick-btn.active{border-color:var(--green);background:var(--greenlt);}
+.site-pick-btn .sp-icon{font-size:28px;margin-bottom:6px;}
+.site-pick-btn .sp-name{font-size:13px;font-weight:700;color:var(--text);}
+.site-pick-btn .sp-url{font-size:11px;color:var(--muted);margin-top:2px;}
 
-  /* ── MAIN APP ───────────────────────────────────────── */
-  #app { display: none; }
+.input-row{display:flex;gap:8px;flex-wrap:wrap;}
+.input-row input{flex:1;min-width:0;border:1.5px solid var(--border);background:var(--bg);border-radius:var(--radius);padding:10px 13px;font-size:14px;outline:none;transition:border-color .15s;}
+.input-row input:focus{border-color:var(--accent);}
+.setup-err{color:var(--danger);font-size:13px;margin-top:8px;display:none;}
 
-  /* ── TABS ───────────────────────────────────────────── */
-  .tabs {
-    display: flex;
-    gap: 4px;
-    padding: 12px 14px 0;
-    border-bottom: 1px solid var(--border);
-    background: var(--surface);
-    overflow-x: auto;
-    scrollbar-width: none;
-  }
-  .tabs::-webkit-scrollbar { display: none; }
-  .tab {
-    padding: 9px 16px;
-    border-radius: var(--radius) var(--radius) 0 0;
-    font-weight: 600;
-    font-size: 14px;
-    color: var(--muted);
-    border: 1px solid transparent;
-    border-bottom: none;
-    background: transparent;
-    white-space: nowrap;
-    transition: color 0.15s, background 0.15s;
-  }
-  .tab.active {
-    background: var(--bg);
-    color: var(--accent);
-    border-color: var(--border);
-  }
-  .tab:hover:not(.active) { color: var(--text); background: var(--surface2); }
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;gap:5px;padding:10px 18px;border-radius:var(--radius);font-weight:600;font-size:14px;transition:filter .15s,transform .1s;white-space:nowrap;}
+.btn:active{transform:scale(0.97);}
+.btn-primary{background:var(--accent);color:#fff;}
+.btn-primary:hover{filter:brightness(1.1);}
+.btn-danger{background:var(--danger);color:#fff;}
+.btn-danger:hover{filter:brightness(1.1);}
+.btn-warn{background:var(--warn);color:#fff;}
+.btn-ghost{background:var(--surface2);color:var(--text);border:1.5px solid var(--border);}
+.btn-ghost:hover{filter:brightness(0.97);}
+.btn-green{background:var(--green);color:#fff;}
+.btn-green:hover{filter:brightness(1.1);}
+.btn-blue{background:#3a5a9a;color:#fff;}
+.btn-blue:hover{filter:brightness(1.1);}
+.btn-sm{padding:7px 12px;font-size:12px;}
+.btn-full{width:100%;justify-content:center;margin-top:8px;}
 
-  /* ── PANELS ─────────────────────────────────────────── */
-  .panel { display: none; padding: 16px; }
-  .panel.active { display: block; }
+/* APP */
+#app{display:none;}
 
-  /* ── SECTION HEADER ──────────────────────────────────── */
-  .section-head {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 12px;
-    flex-wrap: wrap;
-    gap: 8px;
-  }
-  .section-head h3 { font-size: 17px; font-weight: 700; }
+/* API KEY BAR */
+.apikey-bar{background:var(--surface2);border-bottom:1px solid var(--border);padding:7px 14px;display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted);flex-wrap:wrap;}
+.apikey-bar code{font-family:monospace;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:2px 7px;font-size:11px;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:inline-block;vertical-align:middle;}
 
-  /* ── SEARCH BAR ──────────────────────────────────────── */
-  .search-wrap {
-    position: relative;
-    margin-bottom: 14px;
-  }
-  .search-wrap input {
-    width: 100%;
-    border: 1.5px solid var(--border);
-    background: var(--surface);
-    border-radius: var(--radius);
-    padding: 10px 14px 10px 38px;
-    font-size: 14px;
-    outline: none;
-    transition: border-color 0.15s;
-  }
-  .search-wrap input:focus { border-color: var(--accent); }
-  .search-wrap .icon {
-    position: absolute;
-    left: 12px;
-    top: 50%;
-    transform: translateY(-50%);
-    color: var(--muted);
-    font-size: 16px;
-    pointer-events: none;
-  }
+/* TABS */
+.tabs{display:flex;gap:3px;padding:10px 12px 0;border-bottom:1px solid var(--border);background:var(--surface);overflow-x:auto;scrollbar-width:none;}
+.tabs::-webkit-scrollbar{display:none;}
+.tab{padding:8px 14px;border-radius:var(--radius) var(--radius) 0 0;font-weight:600;font-size:13px;color:var(--muted);border:1px solid transparent;border-bottom:none;background:transparent;white-space:nowrap;transition:color .15s,background .15s;}
+.tab.active{background:var(--bg);color:var(--accent);border-color:var(--border);}
+.tab:hover:not(.active){color:var(--text);background:var(--surface2);}
 
-  /* ── COUNTRY SELECT ──────────────────────────────────── */
-  .country-row {
-    display: flex;
-    gap: 8px;
-    margin-bottom: 14px;
-    flex-wrap: wrap;
-    align-items: center;
-  }
-  .country-row select {
-    flex: 1;
-    min-width: 140px;
-    border: 1.5px solid var(--border);
-    background: var(--surface);
-    border-radius: var(--radius);
-    padding: 9px 12px;
-    font-size: 14px;
-    outline: none;
-    cursor: pointer;
-    transition: border-color 0.15s;
-  }
-  .country-row select:focus { border-color: var(--accent); }
+/* PANELS */
+.panel{display:none;padding:14px;}
+.panel.active{display:block;}
 
-  /* ── SERVICE LIST ────────────────────────────────────── */
-  .service-list { display: flex; flex-direction: column; gap: 8px; }
-  .service-card {
-    background: var(--surface);
-    border: 1.5px solid var(--border);
-    border-radius: var(--radius);
-    padding: 12px 14px;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    cursor: pointer;
-    transition: border-color 0.15s, background 0.15s;
-    position: relative;
-  }
-  .service-card:hover { border-color: var(--accent); background: var(--greenlt); }
-  .service-card.selected { border-color: var(--green); background: var(--greenlt); }
-  .service-icon {
-    width: 40px; height: 40px;
-    border-radius: 8px;
-    background: var(--surface2);
-    display: flex; align-items: center; justify-content: center;
-    font-size: 18px;
-    flex-shrink: 0;
-  }
-  .service-info { flex: 1; min-width: 0; }
-  .service-name {
-    font-weight: 600;
-    font-size: 14px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-  .service-server { font-size: 12px; color: var(--muted); margin-top: 1px; }
-  .service-price {
-    background: var(--green);
-    color: #fff;
-    border-radius: 999px;
-    padding: 3px 10px;
-    font-size: 13px;
-    font-weight: 700;
-    flex-shrink: 0;
-  }
-  .check-icon {
-    position: absolute;
-    right: 12px;
-    top: 50%;
-    transform: translateY(-50%);
-    color: var(--green);
-    font-size: 18px;
-    display: none;
-  }
-  .service-card.selected .check-icon { display: block; }
+/* SECTION HEAD */
+.section-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:11px;flex-wrap:wrap;gap:8px;}
+.section-head h3{font-size:16px;font-weight:700;}
 
-  /* ── BUY PANEL ───────────────────────────────────────── */
-  .buy-panel {
-    background: var(--surface);
-    border: 1.5px solid var(--border);
-    border-radius: var(--radius);
-    padding: 16px;
-    margin-bottom: 16px;
-    display: none;
-  }
-  .buy-panel.visible { display: block; }
-  .buy-panel h4 { font-size: 15px; font-weight: 700; margin-bottom: 12px; }
-  .buy-selected-name {
-    font-size: 14px;
-    color: var(--muted);
-    margin-bottom: 12px;
-  }
-  .buy-row {
-    display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
-    align-items: center;
-  }
-  .price-input {
-    border: 1.5px solid var(--border);
-    background: var(--bg);
-    border-radius: var(--radius);
-    padding: 9px 12px;
-    font-size: 14px;
-    width: 140px;
-    outline: none;
-    transition: border-color 0.15s;
-  }
-  .price-input:focus { border-color: var(--accent); }
+/* SEARCH */
+.search-wrap{position:relative;margin-bottom:12px;}
+.search-wrap input{width:100%;border:1.5px solid var(--border);background:var(--surface);border-radius:var(--radius);padding:9px 13px 9px 36px;font-size:14px;outline:none;transition:border-color .15s;}
+.search-wrap input:focus{border-color:var(--accent);}
+.search-wrap .si{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:15px;pointer-events:none;}
 
-  /* ── AUTO CLICKER ────────────────────────────────────── */
-  .autoclicker-card {
-    background: var(--surface);
-    border: 1.5px solid var(--border);
-    border-radius: var(--radius);
-    padding: 14px 16px;
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    margin-bottom: 16px;
-  }
-  .auto-icon {
-    width: 44px; height: 44px;
-    background: var(--accent);
-    border-radius: var(--radius);
-    display: flex; align-items: center; justify-content: center;
-    font-size: 22px;
-    flex-shrink: 0;
-    color: #fff;
-  }
-  .auto-info { flex: 1; }
-  .auto-info strong { font-size: 15px; }
-  .auto-info p { font-size: 12px; color: var(--muted); margin-top: 2px; }
-  .toggle-wrap { flex-shrink: 0; }
-  .toggle {
-    width: 48px; height: 26px;
-    border-radius: 999px;
-    background: var(--border);
-    position: relative;
-    cursor: pointer;
-    transition: background 0.2s;
-    border: none;
-    outline: none;
-  }
-  .toggle::after {
-    content: '';
-    position: absolute;
-    top: 3px; left: 3px;
-    width: 20px; height: 20px;
-    border-radius: 50%;
-    background: #fff;
-    transition: transform 0.2s;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.2);
-  }
-  .toggle.on { background: var(--green); }
-  .toggle.on::after { transform: translateX(22px); }
+/* COUNTRY ROW */
+.country-row{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;align-items:center;}
+.country-row select{flex:1;min-width:130px;border:1.5px solid var(--border);background:var(--surface);border-radius:var(--radius);padding:8px 11px;font-size:14px;outline:none;cursor:pointer;}
+.country-row select:focus{border-color:var(--accent);}
 
-  /* ── ACTIVE NUMBERS ──────────────────────────────────── */
-  .active-nums-head {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 12px;
-  }
-  .active-nums-head h3 { font-size: 17px; font-weight: 700; }
-  .sound-badge {
-    font-size: 12px;
-    font-weight: 600;
-    color: var(--green);
-    display: flex; align-items: center; gap: 4px;
-  }
-  .num-card {
-    background: var(--surface);
-    border: 1.5px solid var(--border);
-    border-radius: var(--radius);
-    padding: 14px;
-    margin-bottom: 10px;
-    box-shadow: var(--shadow);
-  }
-  .num-card-head {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 10px;
-    flex-wrap: wrap;
-    gap: 6px;
-  }
-  .num-service-name { font-weight: 700; font-size: 14px; }
-  .num-price { font-size: 13px; color: var(--accent); font-weight: 600; }
-  .num-timer {
-    background: var(--green);
-    color: #fff;
-    border-radius: 8px;
-    padding: 3px 10px;
-    font-size: 14px;
-    font-weight: 700;
-    font-variant-numeric: tabular-nums;
-  }
-  .num-timer.low { background: var(--danger); }
-  .num-body {
-    background: var(--bg);
-    border: 1.5px solid var(--border);
-    border-radius: var(--radius);
-    padding: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 10px;
-    flex-wrap: wrap;
-    margin-bottom: 10px;
-  }
-  .num-phone {
-    font-size: 20px;
-    font-weight: 700;
-    letter-spacing: 1px;
-    color: var(--text);
-    word-break: break-all;
-  }
-  .num-status {
-    font-size: 13px;
-    color: var(--muted);
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    margin-top: 4px;
-  }
-  .dot-pulse {
-    display: inline-flex;
-    gap: 3px;
-  }
-  .dot-pulse span {
-    width: 5px; height: 5px;
-    border-radius: 50%;
-    background: var(--muted);
-    animation: pulse 1.2s infinite;
-  }
-  .dot-pulse span:nth-child(2) { animation-delay: 0.2s; }
-  .dot-pulse span:nth-child(3) { animation-delay: 0.4s; }
-  @keyframes pulse {
-    0%, 80%, 100% { opacity: 0.3; transform: scale(0.8); }
-    40% { opacity: 1; transform: scale(1); }
-  }
-  .sms-text {
-    background: var(--greenlt);
-    border: 1px solid var(--green);
-    border-radius: var(--radius);
-    padding: 10px 12px;
-    font-size: 13px;
-    color: var(--green);
-    font-weight: 600;
-    margin-bottom: 10px;
-    word-break: break-word;
-  }
-  .num-actions {
-    display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
-  }
-  .num-actions .btn { flex: 1; min-width: 0; justify-content: center; font-size: 13px; }
+/* SERVICE LIST */
+.service-list{display:flex;flex-direction:column;gap:7px;}
+.svc-card{background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius);padding:11px 13px;display:flex;align-items:center;gap:11px;cursor:pointer;transition:border-color .15s,background .15s;position:relative;}
+.svc-card:hover{border-color:var(--accent);background:var(--greenlt);}
+.svc-card.selected{border-color:var(--green);background:var(--greenlt);}
+.svc-icon{width:38px;height:38px;border-radius:8px;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0;}
+.svc-info{flex:1;min-width:0;}
+.svc-name{font-weight:600;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.svc-server{font-size:11px;color:var(--muted);margin-top:1px;}
+.svc-price{background:var(--green);color:#fff;border-radius:999px;padding:3px 9px;font-size:12px;font-weight:700;flex-shrink:0;}
+.svc-check{position:absolute;right:11px;top:50%;transform:translateY(-50%);color:var(--green);font-size:17px;display:none;}
+.svc-card.selected .svc-check{display:block;}
 
-  /* ── EMPTY STATE ─────────────────────────────────────── */
-  .empty {
-    text-align: center;
-    padding: 40px 20px;
-    color: var(--muted);
-  }
-  .empty .emoji { font-size: 40px; margin-bottom: 12px; }
-  .empty p { font-size: 14px; }
+/* BUY PANEL */
+.buy-panel{background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius);padding:14px;margin-bottom:14px;display:none;}
+.buy-panel.visible{display:block;}
+.buy-panel h4{font-size:14px;font-weight:700;margin-bottom:10px;}
+.buy-sel-name{font-size:13px;color:var(--muted);margin-bottom:10px;}
+.buy-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+.price-input{border:1.5px solid var(--border);background:var(--bg);border-radius:var(--radius);padding:8px 11px;font-size:14px;width:160px;outline:none;transition:border-color .15s;}
+.price-input:focus{border-color:var(--accent);}
 
-  /* ── LOADER ─────────────────────────────────────────── */
-  .loader {
-    display: none;
-    width: 100%;
-    text-align: center;
-    padding: 30px;
-    color: var(--muted);
-    font-size: 14px;
-  }
-  .loader.active { display: block; }
-  .spinner {
-    width: 28px; height: 28px;
-    border: 3px solid var(--border);
-    border-top-color: var(--accent);
-    border-radius: 50%;
-    animation: spin 0.7s linear infinite;
-    margin: 0 auto 10px;
-  }
-  @keyframes spin { to { transform: rotate(360deg); } }
+/* AUTO CLICKER */
+.auto-card{background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius);padding:13px 14px;display:none;align-items:center;gap:12px;margin-bottom:14px;}
+.auto-card.visible{display:flex;}
+.auto-icon{width:42px;height:42px;background:var(--accent);border-radius:var(--radius);display:flex;align-items:center;justify-content:center;font-size:20px;color:#fff;flex-shrink:0;}
+.auto-info{flex:1;}
+.auto-info strong{font-size:14px;}
+.auto-info p{font-size:11px;color:var(--muted);margin-top:2px;}
+.toggle{width:46px;height:25px;border-radius:999px;background:var(--border);position:relative;cursor:pointer;transition:background .2s;border:none;outline:none;flex-shrink:0;}
+.toggle::after{content:'';position:absolute;top:3px;left:3px;width:19px;height:19px;border-radius:50%;background:#fff;transition:transform .2s;box-shadow:0 1px 3px rgba(0,0,0,0.2);}
+.toggle.on{background:var(--green);}
+.toggle.on::after{transform:translateX(21px);}
 
-  /* ── BADGE ───────────────────────────────────────────── */
-  .badge {
-    display: inline-block;
-    border-radius: 999px;
-    padding: 2px 8px;
-    font-size: 11px;
-    font-weight: 700;
-    margin-left: 6px;
-    vertical-align: middle;
-  }
-  .badge-red { background: #fde8e8; color: var(--danger); }
-  .badge-grn { background: var(--greenlt); color: var(--green); }
+/* ACTIVE NUMBERS HEAD */
+.active-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+.active-head h3{font-size:16px;font-weight:700;}
+.sound-badge{font-size:11px;font-weight:700;color:var(--green);display:flex;align-items:center;gap:3px;}
 
-  /* ── MODAL ───────────────────────────────────────────── */
-  .modal-overlay {
-    display: none;
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.45);
-    z-index: 200;
-    align-items: center;
-    justify-content: center;
-    padding: 16px;
-  }
-  .modal-overlay.open { display: flex; }
-  .modal-box {
-    background: var(--surface);
-    border-radius: var(--radius);
-    padding: 24px 20px;
-    max-width: 400px;
-    width: 100%;
-    box-shadow: 0 8px 40px rgba(0,0,0,0.18);
-  }
-  .modal-box h3 { font-size: 17px; font-weight: 700; margin-bottom: 10px; }
-  .modal-box p { font-size: 14px; color: var(--muted); margin-bottom: 18px; }
-  .modal-actions { display: flex; gap: 8px; flex-wrap: wrap; }
-  .modal-actions .btn { flex: 1; justify-content: center; }
+/* NUMBER CARD */
+.num-card{background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius);padding:13px;margin-bottom:9px;box-shadow:var(--shadow);}
+.num-card-head{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:9px;gap:6px;}
+.num-svc{font-weight:700;font-size:13px;}
+.num-price{font-size:12px;color:var(--accent);font-weight:600;}
+.num-timer{background:var(--green);color:#fff;border-radius:7px;padding:3px 9px;font-size:13px;font-weight:700;font-variant-numeric:tabular-nums;flex-shrink:0;}
+.num-timer.low{background:var(--danger);}
+.num-body{background:var(--bg);border:1.5px solid var(--border);border-radius:var(--radius);padding:11px;display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:9px;}
+.num-phone{font-size:19px;font-weight:700;letter-spacing:0.5px;word-break:break-all;}
+.num-status{font-size:12px;color:var(--muted);display:flex;align-items:center;gap:4px;margin-top:3px;}
+.dot-pulse{display:inline-flex;gap:3px;}
+.dot-pulse span{width:5px;height:5px;border-radius:50%;background:var(--muted);animation:pulse 1.2s infinite;}
+.dot-pulse span:nth-child(2){animation-delay:.2s;}
+.dot-pulse span:nth-child(3){animation-delay:.4s;}
+@keyframes pulse{0%,80%,100%{opacity:.3;transform:scale(.8);}40%{opacity:1;transform:scale(1);}}
+.sms-box{background:var(--greenlt);border:1px solid var(--green);border-radius:var(--radius);padding:9px 11px;font-size:13px;color:var(--green);font-weight:600;margin-bottom:9px;word-break:break-word;}
+.num-actions{display:flex;gap:7px;flex-wrap:wrap;}
+.num-actions .btn{flex:1;min-width:0;justify-content:center;font-size:12px;padding:8px 10px;}
 
-  /* ── RESPONSIVE ──────────────────────────────────────── */
-  @media (max-width: 480px) {
-    .num-phone { font-size: 17px; }
-    .btn { padding: 10px 14px; font-size: 13px; }
-  }
+/* BADGE */
+.badge{display:inline-block;border-radius:999px;padding:2px 7px;font-size:11px;font-weight:700;margin-left:5px;vertical-align:middle;}
+.badge-grn{background:var(--greenlt);color:var(--green);}
+.badge-red{background:#fde8e8;color:var(--danger);}
 
-  /* ── API KEY BAR ─────────────────────────────────────── */
-  .apikey-bar {
-    background: var(--surface2);
-    border-bottom: 1px solid var(--border);
-    padding: 8px 16px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 12px;
-    color: var(--muted);
-    flex-wrap: wrap;
-  }
-  .apikey-bar code {
-    font-family: monospace;
-    background: var(--bg);
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    padding: 2px 8px;
-    font-size: 12px;
-    max-width: 200px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    display: inline-block;
-    vertical-align: middle;
-  }
+/* LOADER */
+.loader{display:none;text-align:center;padding:28px;color:var(--muted);font-size:13px;}
+.loader.active{display:block;}
+.spinner{width:26px;height:26px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;margin:0 auto 10px;}
+@keyframes spin{to{transform:rotate(360deg);}}
 
-  /* Filter row for Jio tab */
-  .filter-row {
-    display: flex;
-    gap: 6px;
-    margin-bottom: 12px;
-    flex-wrap: wrap;
-  }
-  .filter-btn {
-    padding: 6px 12px;
-    border-radius: 999px;
-    font-size: 12px;
-    font-weight: 600;
-    background: var(--surface2);
-    color: var(--muted);
-    border: 1.5px solid var(--border);
-    cursor: pointer;
-    transition: all 0.15s;
-  }
-  .filter-btn.active {
-    background: var(--accent);
-    color: #fff;
-    border-color: var(--accent);
-  }
+/* EMPTY */
+.empty{text-align:center;padding:36px 16px;color:var(--muted);}
+.empty .emoji{font-size:38px;margin-bottom:10px;}
+.empty p{font-size:13px;}
+
+/* FILTER BTNS */
+.filter-row{display:flex;gap:6px;margin-bottom:11px;flex-wrap:wrap;}
+.filter-btn{padding:5px 11px;border-radius:999px;font-size:12px;font-weight:600;background:var(--surface2);color:var(--muted);border:1.5px solid var(--border);cursor:pointer;transition:all .15s;}
+.filter-btn.active{background:var(--accent);color:#fff;border-color:var(--accent);}
+
+/* MODAL */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;align-items:center;justify-content:center;padding:16px;}
+.modal-overlay.open{display:flex;}
+.modal-box{background:var(--surface);border-radius:var(--radius);padding:22px 18px;max-width:380px;width:100%;box-shadow:0 8px 40px rgba(0,0,0,.18);}
+.modal-box h3{font-size:16px;font-weight:700;margin-bottom:8px;}
+.modal-box p{font-size:13px;color:var(--muted);margin-bottom:16px;}
+.modal-actions{display:flex;gap:8px;flex-wrap:wrap;}
+.modal-actions .btn{flex:1;justify-content:center;}
+
+/* OTP SERVICE service grid */
+.os-service-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px;}
+.os-svc-card{background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius);padding:12px 10px;text-align:center;cursor:pointer;transition:all .15s;position:relative;}
+.os-svc-card:hover{border-color:var(--accent);background:var(--greenlt);}
+.os-svc-card.selected{border-color:var(--green);background:var(--greenlt);}
+.os-svc-card .os-icon{font-size:24px;margin-bottom:5px;}
+.os-svc-card .os-name{font-size:13px;font-weight:700;color:var(--text);}
+.os-svc-card .os-code{font-size:11px;color:var(--muted);font-family:monospace;margin-top:2px;}
+.os-svc-card .os-chk{position:absolute;top:5px;right:7px;color:var(--green);font-size:14px;display:none;}
+.os-svc-card.selected .os-chk{display:block;}
+
+@media(max-width:480px){
+  .num-phone{font-size:16px;}
+  .btn{padding:9px 12px;font-size:12px;}
+  .os-service-grid{grid-template-columns:repeat(auto-fill,minmax(110px,1fr));}
+}
 </style>
 </head>
 <body>
 
-<!-- HEADER -->
 <header>
-  <div class="logo">OTP<span>Doctor</span> ⭐</div>
+  <div class="logo">OTP<span>Manager</span> ⭐</div>
+  <div id="site-badge-header" style="display:none;"></div>
   <div class="balance-pill" id="balance-pill" onclick="refreshBalance()" title="Tap to refresh">
-    <span class="rupee">₹</span>
-    <span id="balance-val">–</span>
+    <span>₹</span><span id="balance-val">–</span>
   </div>
 </header>
 
-<!-- TOAST -->
 <div id="toast"></div>
 
-<!-- SETUP SCREEN -->
+<!-- ══ SETUP SCREEN ══ -->
 <div id="setup-screen">
   <div class="setup-card">
-    <div style="font-size:48px;margin-bottom:12px;">💊</div>
-    <h2>OTP Doctor</h2>
-    <p>Enter your API key to get started. You can find it on <strong>otpdoctor.in/api-tool</strong></p>
-    <div class="input-group">
-      <input type="text" id="api-key-input" placeholder="Enter your API key…" autocomplete="off" spellcheck="false">
-      <button class="btn btn-primary" onclick="connectApi()">Connect</button>
+    <div style="font-size:44px;text-align:center;margin-bottom:10px;">💊</div>
+    <h2 style="text-align:center;">OTP Manager</h2>
+    <p class="sub" style="text-align:center;margin-bottom:18px;">Choose your OTP service and enter your API key</p>
+
+    <div class="site-picker">
+      <div class="site-pick-btn active" id="pick-od" onclick="pickSite('od')">
+        <div class="sp-icon">🩺</div>
+        <div class="sp-name">OTP Doctor</div>
+        <div class="sp-url">otpdoctor.in</div>
+      </div>
+      <div class="site-pick-btn" id="pick-os" onclick="pickSite('os')">
+        <div class="sp-icon">🔐</div>
+        <div class="sp-name">OTP Service</div>
+        <div class="sp-url">otpservice.xyz</div>
+      </div>
     </div>
-    <div id="setup-error" style="color:var(--danger);font-size:13px;margin-top:10px;display:none;"></div>
+
+    <div class="input-row">
+      <input type="text" id="api-key-input" placeholder="Paste your API key here…" autocomplete="off" spellcheck="false">
+      <button class="btn btn-primary" id="connect-btn" onclick="connectApi()">Connect</button>
+    </div>
+    <div class="setup-err" id="setup-error"></div>
   </div>
 </div>
 
-<!-- MAIN APP -->
+<!-- ══ MAIN APP ══ -->
 <div id="app">
-  <!-- API Key bar -->
   <div class="apikey-bar">
     <span>API Key:</span>
     <code id="apikey-display"></code>
-    <button class="btn btn-ghost btn-sm" onclick="logout()" style="margin-left:auto;">Change Key</button>
+    <button class="btn btn-ghost btn-sm" onclick="logout()" style="margin-left:auto;">Change</button>
   </div>
 
-  <!-- TABS -->
-  <div class="tabs">
-    <button class="tab active" onclick="switchTab('buy')">🛒 Buy Number</button>
-    <button class="tab" onclick="switchTab('orders')">📋 Orders</button>
-    <button class="tab" onclick="switchTab('jio')">📱 My Jio</button>
+  <!-- TABS — OTP Doctor -->
+  <div class="tabs" id="tabs-od" style="display:none;">
+    <button class="tab active" onclick="switchTab('od','buy')">🛒 Buy Number</button>
+    <button class="tab" onclick="switchTab('od','orders')">📋 Orders</button>
+    <button class="tab" onclick="switchTab('od','jio')">📱 My Jio</button>
   </div>
 
-  <!-- BUY PANEL -->
-  <div class="panel active" id="panel-buy">
-    <!-- Country selector -->
-    <div class="section-head">
-      <h3>Select Service</h3>
-    </div>
-    <div class="country-row">
-      <select id="country-select" onchange="loadServices()">
-        <option value="">Loading countries…</option>
-      </select>
-      <button class="btn btn-ghost btn-sm" onclick="loadServices()">🔄 Refresh</button>
-    </div>
+  <!-- TABS — OTP Service -->
+  <div class="tabs" id="tabs-os" style="display:none;">
+    <button class="tab active" onclick="switchTab('os','buy')">🛒 Buy Number</button>
+    <button class="tab" onclick="switchTab('os','orders')">📋 Orders</button>
+  </div>
 
-    <!-- Search -->
-    <div class="search-wrap">
-      <span class="icon">🔍</span>
-      <input type="text" id="service-search" placeholder="Search services…" oninput="filterServices()">
-    </div>
+  <!-- ══ OTP DOCTOR PANELS ══ -->
+  <div id="od-panels" style="display:none;">
 
-    <!-- Loader -->
-    <div class="loader" id="services-loader">
-      <div class="spinner"></div>
-      Loading services…
-    </div>
+    <!-- BUY -->
+    <div class="panel active" id="od-panel-buy">
+      <div class="section-head"><h3>Select Service</h3></div>
+      <div class="country-row">
+        <select id="od-country" onchange="odLoadServices()">
+          <option value="">Loading…</option>
+        </select>
+        <button class="btn btn-ghost btn-sm" onclick="odLoadServices()">🔄</button>
+      </div>
+      <div class="search-wrap">
+        <span class="si">🔍</span>
+        <input type="text" id="od-search" placeholder="Search services…" oninput="odFilterServices()">
+      </div>
+      <div class="loader" id="od-svc-loader"><div class="spinner"></div>Loading services…</div>
+      <div class="service-list" id="od-svc-list"></div>
 
-    <!-- Service list -->
-    <div class="service-list" id="service-list"></div>
+      <div class="buy-panel" id="od-buy-panel">
+        <h4>Purchase Number</h4>
+        <div class="buy-sel-name" id="od-buy-sel">No service selected</div>
+        <div class="buy-row">
+          <input type="number" class="price-input" id="od-max-price" placeholder="Max price ₹ (optional)" min="1" step="0.5">
+          <button class="btn btn-green" onclick="odBuyNumber()">⚡ Buy Now</button>
+        </div>
+      </div>
 
-    <!-- Buy panel (appears after selecting a service) -->
-    <div class="buy-panel" id="buy-panel">
-      <h4>Purchase Number</h4>
-      <div class="buy-selected-name" id="buy-selected-name">No service selected</div>
-      <div class="buy-row">
-        <input type="number" class="price-input" id="max-price" placeholder="Max price (₹) optional" min="1" step="0.5">
-        <button class="btn btn-green" onclick="buyNumber()">⚡ Buy Now</button>
+      <div class="auto-card" id="od-auto-card">
+        <div class="auto-icon">⚡</div>
+        <div class="auto-info">
+          <strong>Auto Clicker</strong>
+          <p id="od-auto-txt">Tap to activate — keeps buying until a number is received</p>
+        </div>
+        <button class="toggle" id="od-auto-toggle" onclick="odToggleAuto()"></button>
+      </div>
+
+      <div class="active-head">
+        <h3>Active Numbers</h3>
+        <div class="sound-badge">🔔 SOUND ON</div>
+      </div>
+      <div id="od-active-list">
+        <div class="empty"><div class="emoji">📭</div><p>No active numbers yet.</p></div>
       </div>
     </div>
 
-    <!-- Auto Clicker -->
-    <div class="autoclicker-card" id="autoclicker-card" style="display:none;">
-      <div class="auto-icon">⚡</div>
-      <div class="auto-info">
-        <strong>Auto Clicker</strong>
-        <p id="auto-status-text">Tap to activate — keeps buying until a number is received</p>
+    <!-- ORDERS -->
+    <div class="panel" id="od-panel-orders">
+      <div class="section-head">
+        <h3>All Orders</h3>
+        <button class="btn btn-ghost btn-sm" onclick="renderOdOrders()">🔄 Refresh</button>
       </div>
-      <div class="toggle-wrap">
-        <button class="toggle" id="auto-toggle" onclick="toggleAutoClicker()"></button>
+      <div id="od-orders-list">
+        <div class="empty"><div class="emoji">📋</div><p>No orders yet.</p></div>
       </div>
     </div>
 
-    <!-- Active Numbers on this tab -->
-    <div class="active-nums-head">
-      <h3>Active Numbers</h3>
-      <div class="sound-badge">🔔 SOUND ON</div>
-    </div>
-    <div id="active-buy-list">
-      <div class="empty">
-        <div class="emoji">📭</div>
-        <p>No active numbers yet.<br>Select a service above and tap Buy Now.</p>
+    <!-- MY JIO -->
+    <div class="panel" id="od-panel-jio">
+      <div class="section-head"><h3>My Jio Services</h3></div>
+      <div class="filter-row">
+        <button class="filter-btn active" onclick="odJioFilter('all',this)">All Jio</button>
+        <button class="filter-btn" onclick="odJioFilter('myjio',this)">My Jio</button>
+        <button class="filter-btn" onclick="odJioFilter('jiocom',this)">My jio.com</button>
       </div>
+      <div class="search-wrap">
+        <span class="si">🔍</span>
+        <input type="text" id="od-jio-search" placeholder="Search Jio services…" oninput="odFilterJio()">
+      </div>
+      <div class="loader" id="od-jio-loader"><div class="spinner"></div>Loading…</div>
+      <div class="service-list" id="od-jio-list"></div>
     </div>
   </div>
 
-  <!-- ORDERS PANEL -->
-  <div class="panel" id="panel-orders">
-    <div class="section-head">
-      <h3>All Orders</h3>
-      <button class="btn btn-ghost btn-sm" onclick="renderOrders()">🔄 Refresh</button>
-    </div>
-    <div id="orders-list">
-      <div class="empty">
-        <div class="emoji">📋</div>
-        <p>No orders yet. Buy a number to get started.</p>
+  <!-- ══ OTP SERVICE PANELS ══ -->
+  <div id="os-panels" style="display:none;">
+
+    <!-- BUY -->
+    <div class="panel active" id="os-panel-buy">
+      <div class="section-head"><h3>Select Service</h3></div>
+      <div class="search-wrap">
+        <span class="si">🔍</span>
+        <input type="text" id="os-search" placeholder="Search services…" oninput="osFilterServices()">
+      </div>
+      <div class="os-service-grid" id="os-svc-grid"></div>
+
+      <div class="buy-panel" id="os-buy-panel" style="margin-top:14px;">
+        <h4>Purchase Number</h4>
+        <div class="buy-sel-name" id="os-buy-sel">No service selected</div>
+        <div class="buy-row">
+          <button class="btn btn-blue" onclick="osBuyNumber()">⚡ Buy Now</button>
+        </div>
+      </div>
+
+      <div class="auto-card" id="os-auto-card">
+        <div class="auto-icon" style="background:#3a5a9a;">⚡</div>
+        <div class="auto-info">
+          <strong>Auto Clicker</strong>
+          <p id="os-auto-txt">Tap to activate — keeps buying until a number is received</p>
+        </div>
+        <button class="toggle" id="os-auto-toggle" onclick="osToggleAuto()"></button>
+      </div>
+
+      <div class="active-head">
+        <h3>Active Numbers</h3>
+        <div class="sound-badge">🔔 SOUND ON</div>
+      </div>
+      <div id="os-active-list">
+        <div class="empty"><div class="emoji">📭</div><p>No active numbers yet.</p></div>
       </div>
     </div>
-  </div>
 
-  <!-- MY JIO PANEL -->
-  <div class="panel" id="panel-jio">
-    <div class="section-head">
-      <h3>My Jio Services</h3>
+    <!-- ORDERS -->
+    <div class="panel" id="os-panel-orders">
+      <div class="section-head">
+        <h3>All Orders</h3>
+        <button class="btn btn-ghost btn-sm" onclick="renderOsOrders()">🔄 Refresh</button>
+      </div>
+      <div id="os-orders-list">
+        <div class="empty"><div class="emoji">📋</div><p>No orders yet.</p></div>
+      </div>
     </div>
-    <div class="filter-row">
-      <button class="filter-btn active" onclick="jioFilter('all', this)">All Jio</button>
-      <button class="filter-btn" onclick="jioFilter('myjio', this)">My Jio</button>
-      <button class="filter-btn" onclick="jioFilter('jiocom', this)">My jio.com</button>
-    </div>
-    <div class="search-wrap">
-      <span class="icon">🔍</span>
-      <input type="text" id="jio-search" placeholder="Search Jio services…" oninput="filterJio()">
-    </div>
-    <div class="loader" id="jio-loader">
-      <div class="spinner"></div>
-      Loading Jio services…
-    </div>
-    <div class="service-list" id="jio-list"></div>
   </div>
 </div>
 
-<!-- MODAL: Confirm cancel -->
+<!-- CANCEL MODAL -->
 <div class="modal-overlay" id="cancel-modal">
   <div class="modal-box">
     <h3>Cancel Activation?</h3>
-    <p>This will cancel the number and you won't receive the OTP. The number will be closed.</p>
+    <p>This will cancel the number. The activation will be closed.</p>
     <div class="modal-actions">
       <button class="btn btn-ghost" onclick="closeModal('cancel-modal')">Keep it</button>
       <button class="btn btn-danger" id="confirm-cancel-btn">Yes, Cancel</button>
@@ -788,182 +418,263 @@
 </div>
 
 <script>
-// ── STATE ──────────────────────────────────────────────────────────
+// ══ GLOBAL STATE ════════════════════════════════════════════════
 let API_KEY = localStorage.getItem('otp_api_key') || '';
-let allServices = [];
-let allJioServices = [];
-let jioFilterMode = 'all';
-let selectedService = null;  // { id, name, price, server }
-let activeNumbers = JSON.parse(localStorage.getItem('otp_active_numbers') || '[]');
-let autoClickerOn = false;
-let autoClickerInterval = null;
-let pollingIntervals = {};
-let timerIntervals = {};
-let pendingCancelId = null;
-let soundEnabled = true;
+let SITE    = localStorage.getItem('otp_site') || 'od'; // 'od' | 'os'
 
-// ── INIT ──────────────────────────────────────────────────────────
+// OTP Doctor state
+let odAllServices  = [];
+let odJioServices  = [];
+let odJioMode      = 'all';
+let odSelected     = null;
+let odAutoOn       = false;
+let odAutoTimer    = null;
+
+// OTP Service state
+let osAllServices  = [];
+let osSelected     = null;
+let osAutoOn       = false;
+let osAutoTimer    = null;
+
+// Shared
+let activeNumbers  = JSON.parse(localStorage.getItem('otp_numbers') || '[]');
+let pollingMap     = {};
+let timerMap       = {};
+let pendingCancel  = null;
+let toastTmr       = null;
+
+// OTP Service hardcoded services (loaded from well-known codes)
+const OS_SERVICES = [
+  {code:'jio',  name:'Jio',         icon:'📶'},
+  {code:'wa',   name:'WhatsApp',    icon:'💬'},
+  {code:'tg',   name:'Telegram',    icon:'✈️'},
+  {code:'go',   name:'Google',      icon:'🔵'},
+  {code:'ig',   name:'Instagram',   icon:'📸'},
+  {code:'fb',   name:'Facebook',    icon:'👤'},
+  {code:'tw',   name:'Twitter/X',   icon:'🐦'},
+  {code:'yt',   name:'YouTube',     icon:'▶️'},
+  {code:'am',   name:'Amazon',      icon:'📦'},
+  {code:'fl',   name:'Flipkart',    icon:'🛍️'},
+  {code:'az',   name:'Azure',       icon:'☁️'},
+  {code:'li',   name:'LinkedIn',    icon:'💼'},
+  {code:'snap', name:'Snapchat',    icon:'👻'},
+  {code:'tt',   name:'TikTok',      icon:'🎵'},
+  {code:'uber', name:'Uber',        icon:'🚗'},
+  {code:'ola',  name:'Ola',         icon:'🟢'},
+  {code:'nf',   name:'Netflix',     icon:'🎬'},
+  {code:'sp',   name:'Spotify',     icon:'🎧'},
+  {code:'py',   name:'PayTM',       icon:'💳'},
+  {code:'ph',   name:'PhonePe',     icon:'📱'},
+  {code:'gpay', name:'Google Pay',  icon:'💰'},
+  {code:'sw',   name:'Swiggy',      icon:'🍔'},
+  {code:'zm',   name:'Zomato',      icon:'🍕'},
+  {code:'ms',   name:'Microsoft',   icon:'🪟'},
+  {code:'ap',   name:'Apple',       icon:'🍎'},
+  {code:'vk',   name:'VK',          icon:'🔷'},
+  {code:'ok',   name:'OK.ru',       icon:'🟠'},
+  {code:'mm',   name:'MakeMyTrip',  icon:'✈'},
+  {code:'ixg',  name:'IRCTC',       icon:'🚂'},
+  {code:'bn',   name:'Byju\'s',     icon:'📚'},
+];
+
+// ══ INIT ════════════════════════════════════════════════════════
 window.onload = () => {
   if (API_KEY) {
+    setSitePicker(SITE);
     showApp();
+  } else {
+    setSitePicker(SITE);
   }
 };
 
-function showApp() {
-  document.getElementById('setup-screen').style.display = 'none';
-  document.getElementById('app').style.display = 'block';
-  document.getElementById('apikey-display').textContent = API_KEY.substring(0, 18) + '…';
-  refreshBalance();
-  loadCountries();
-  renderOrders();
-  // Resume polling for any saved active numbers
-  activeNumbers.forEach(n => {
-    if (n.status !== 'cancelled' && n.status !== 'received') {
-      startPolling(n.id);
-      startTimer(n.id);
-    }
-  });
-  renderActiveBuy();
-};
+function setSitePicker(site) {
+  SITE = site;
+  document.getElementById('pick-od').classList.toggle('active', site === 'od');
+  document.getElementById('pick-os').classList.toggle('active', site === 'os');
+}
 
-// ── CONNECT ───────────────────────────────────────────────────────
+function pickSite(site) {
+  setSitePicker(site);
+}
+
+// ══ CONNECT ═════════════════════════════════════════════════════
 async function connectApi() {
   const key = document.getElementById('api-key-input').value.trim();
-  if (!key) { showSetupError('Please enter your API key'); return; }
-  document.querySelector('#setup-screen button').textContent = 'Connecting…';
-  document.querySelector('#setup-screen button').disabled = true;
-  const r = await fetch(`/api/balance?api_key=${encodeURIComponent(key)}`);
-  const data = await r.json();
-  document.querySelector('#setup-screen button').textContent = 'Connect';
-  document.querySelector('#setup-screen button').disabled = false;
-  if (!data.ok) { showSetupError(data.error || 'Connection failed'); return; }
-  // Check raw response
-  const raw = data.raw || '';
-  if (raw.includes('BAD_KEY') || raw.includes('ACCOUNT_BLOCKED')) {
-    showSetupError('Invalid API key or account blocked'); return;
+  if (!key) { showSetupErr('Please enter your API key'); return; }
+  const btn = document.getElementById('connect-btn');
+  btn.textContent = 'Connecting…'; btn.disabled = true;
+
+  let valid = false;
+  if (SITE === 'od') {
+    const r = await fetch(`/od/balance?api_key=${enc(key)}`);
+    const d = await r.json();
+    const raw = d.raw || '';
+    valid = d.ok && !raw.includes('BAD_KEY') && !raw.includes('ACCOUNT_BLOCKED');
+    if (d.ok && (d.data || raw)) valid = true;
+    if (raw.includes('BAD_KEY') || raw.includes('ACCOUNT_BLOCKED')) valid = false;
+  } else {
+    // OTP Service: try a dummy buy with invalid service — if BAD_KEY it'll say so, otherwise key is valid
+    // We just accept the key and let first real request fail gracefully
+    // Validate by checking key is non-empty (no public balance endpoint)
+    valid = key.length > 8;
   }
+
+  btn.textContent = 'Connect'; btn.disabled = false;
+  if (!valid) { showSetupErr('Invalid API key or connection failed'); return; }
+
   API_KEY = key;
   localStorage.setItem('otp_api_key', key);
+  localStorage.setItem('otp_site', SITE);
   document.getElementById('setup-error').style.display = 'none';
   showApp();
 }
 
-function showSetupError(msg) {
+function showSetupErr(msg) {
   const el = document.getElementById('setup-error');
-  el.textContent = msg;
-  el.style.display = 'block';
+  el.textContent = msg; el.style.display = 'block';
+}
+
+function showApp() {
+  document.getElementById('setup-screen').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+  document.getElementById('apikey-display').textContent = API_KEY.substring(0,18) + '…';
+
+  // Show correct tabs & panels
+  const isOd = SITE === 'od';
+  document.getElementById('tabs-od').style.display    = isOd ? 'flex' : 'none';
+  document.getElementById('tabs-os').style.display    = isOd ? 'none' : 'flex';
+  document.getElementById('od-panels').style.display  = isOd ? 'block' : 'none';
+  document.getElementById('os-panels').style.display  = isOd ? 'none' : 'block';
+
+  // Site badge in header
+  const badge = document.getElementById('site-badge-header');
+  badge.style.display = 'inline-block';
+  badge.className = 'site-badge ' + SITE;
+  badge.textContent = SITE === 'od' ? 'OTP Doctor' : 'OTP Service';
+
+  refreshBalance();
+  if (isOd) {
+    odLoadCountries();
+    renderOdOrders();
+  } else {
+    osRenderServices();
+    renderOsOrders();
+  }
+
+  // Resume timers & polling for saved numbers
+  activeNumbers.filter(n => n.site === SITE).forEach(n => {
+    if (n.status === 'waiting') { startPolling(n.id); startTimer(n.id); }
+  });
+  renderActive();
 }
 
 function logout() {
-  stopAutoClicker();
-  Object.values(pollingIntervals).forEach(clearInterval);
-  Object.values(timerIntervals).forEach(clearInterval);
-  API_KEY = '';
+  stopOdAuto(); stopOsAuto();
+  Object.values(pollingMap).forEach(clearInterval);
+  Object.values(timerMap).forEach(clearInterval);
+  API_KEY = ''; SITE = 'od';
   localStorage.removeItem('otp_api_key');
+  localStorage.removeItem('otp_site');
   document.getElementById('app').style.display = 'none';
   document.getElementById('setup-screen').style.display = 'flex';
   document.getElementById('api-key-input').value = '';
   document.getElementById('balance-val').textContent = '–';
+  setSitePicker('od');
 }
 
-// ── TABS ──────────────────────────────────────────────────────────
-function switchTab(name) {
-  document.querySelectorAll('.tab').forEach((t, i) => {
-    const names = ['buy','orders','jio'];
+// ══ TABS ════════════════════════════════════════════════════════
+function switchTab(site, name) {
+  const tabsEl = document.getElementById('tabs-' + site);
+  tabsEl.querySelectorAll('.tab').forEach((t, i) => {
+    const names = site === 'od' ? ['buy','orders','jio'] : ['buy','orders'];
     t.classList.toggle('active', names[i] === name);
   });
-  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-  document.getElementById('panel-' + name).classList.add('active');
-  if (name === 'orders') renderOrders();
-  if (name === 'jio') loadJioServices();
+  const panelsEl = document.getElementById(site + '-panels');
+  panelsEl.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  const target = document.getElementById(site + '-panel-' + name);
+  if (target) target.classList.add('active');
+  if (site === 'od' && name === 'orders') renderOdOrders();
+  if (site === 'od' && name === 'jio')    odLoadJio();
+  if (site === 'os' && name === 'orders') renderOsOrders();
 }
 
-// ── BALANCE ───────────────────────────────────────────────────────
+// ══ BALANCE ════════════════════════════════════════════════════
 async function refreshBalance() {
   document.getElementById('balance-val').textContent = '…';
-  const r = await fetch(`/api/balance?api_key=${encodeURIComponent(API_KEY)}`);
-  const data = await r.json();
-  if (data.ok) {
-    const raw = data.raw || '';
-    const json = data.data;
-    if (json && json.ACCESS_BALANCE !== undefined) {
-      document.getElementById('balance-val').textContent = json.ACCESS_BALANCE;
-    } else if (raw.includes('ACCESS_BALANCE:')) {
-      const val = raw.split('ACCESS_BALANCE:')[1]?.trim();
-      document.getElementById('balance-val').textContent = val || raw;
+  if (SITE === 'od') {
+    const r = await fetch(`/od/balance?api_key=${enc(API_KEY)}`);
+    const d = await r.json();
+    if (d.ok) {
+      const raw = d.raw || '';
+      const json = d.data;
+      if (json && json.ACCESS_BALANCE !== undefined) {
+        document.getElementById('balance-val').textContent = json.ACCESS_BALANCE;
+      } else if (raw.includes('ACCESS_BALANCE:')) {
+        document.getElementById('balance-val').textContent = raw.split('ACCESS_BALANCE:')[1]?.trim() || '?';
+      } else {
+        document.getElementById('balance-val').textContent = raw || '?';
+      }
     } else {
-      document.getElementById('balance-val').textContent = raw || 'N/A';
+      document.getElementById('balance-val').textContent = 'Err';
     }
   } else {
-    document.getElementById('balance-val').textContent = 'Err';
+    // OTP Service: use last known balance from buy response
+    const last = activeNumbers.filter(n => n.site === 'os' && n.updatedBalance !== undefined).pop();
+    document.getElementById('balance-val').textContent = last ? last.updatedBalance : '–';
   }
 }
 
-// ── COUNTRIES ─────────────────────────────────────────────────────
-async function loadCountries() {
-  const r = await fetch(`/api/countries?api_key=${encodeURIComponent(API_KEY)}`);
-  const data = await r.json();
-  const sel = document.getElementById('country-select');
+// ══════════════════════════════════════════════════════════════════
+// OTP DOCTOR
+// ══════════════════════════════════════════════════════════════════
+
+async function odLoadCountries() {
+  const r = await fetch(`/od/countries?api_key=${enc(API_KEY)}`);
+  const d = await r.json();
+  const sel = document.getElementById('od-country');
   sel.innerHTML = '';
-  if (data.ok) {
-    const countries = data.data || {};
-    if (typeof countries === 'object' && !Array.isArray(countries)) {
-      Object.entries(countries).forEach(([code, name]) => {
-        const opt = document.createElement('option');
-        opt.value = code;
-        opt.textContent = `${name} (${code})`;
-        if (code === 'in') opt.selected = true;
-        sel.appendChild(opt);
-      });
-    } else {
-      // Fallback hardcoded
-      addDefaultCountries(sel);
-    }
+  let countries = {};
+  if (d.ok && d.data && typeof d.data === 'object' && !Array.isArray(d.data)) {
+    countries = d.data;
   } else {
-    addDefaultCountries(sel);
+    countries = {in:'India',us:'United States',uk:'United Kingdom',za:'South Africa',iq:'Iraq'};
   }
-  loadServices();
-}
-
-function addDefaultCountries(sel) {
-  const defaults = {in:'India', us:'United States', uk:'United Kingdom', za:'South Africa', iq:'Iraq'};
-  Object.entries(defaults).forEach(([code, name]) => {
-    const opt = document.createElement('option');
-    opt.value = code;
-    opt.textContent = `${name} (${code})`;
-    if (code === 'in') opt.selected = true;
-    sel.appendChild(opt);
+  Object.entries(countries).forEach(([code, name]) => {
+    const o = document.createElement('option');
+    o.value = code; o.textContent = `${name} (${code})`;
+    if (code === 'in') o.selected = true;
+    sel.appendChild(o);
   });
+  odLoadServices();
 }
 
-// ── SERVICES ──────────────────────────────────────────────────────
-async function loadServices() {
-  const country = document.getElementById('country-select').value || 'in';
-  document.getElementById('services-loader').classList.add('active');
-  document.getElementById('service-list').innerHTML = '';
-  const r = await fetch(`/api/services?api_key=${encodeURIComponent(API_KEY)}&country=${encodeURIComponent(country)}`);
-  const data = await r.json();
-  document.getElementById('services-loader').classList.remove('active');
-  if (data.ok && data.data && typeof data.data === 'object') {
-    allServices = Object.entries(data.data).map(([id, v]) => ({
+async function odLoadServices() {
+  const country = document.getElementById('od-country').value || 'in';
+  document.getElementById('od-svc-loader').classList.add('active');
+  document.getElementById('od-svc-list').innerHTML = '';
+  const r = await fetch(`/od/services?api_key=${enc(API_KEY)}&country=${enc(country)}`);
+  const d = await r.json();
+  document.getElementById('od-svc-loader').classList.remove('active');
+  if (d.ok && d.data && typeof d.data === 'object' && !Array.isArray(d.data)) {
+    odAllServices = Object.entries(d.data).map(([id, v]) => ({
       id, name: v.service_name, price: v.service_price, server: v.server_name
     }));
   } else {
-    allServices = [];
+    odAllServices = [];
     toast('Could not load services', 'error');
   }
-  filterServices();
+  odFilterServices();
 }
 
-function filterServices() {
-  const q = document.getElementById('service-search').value.toLowerCase();
-  const filtered = allServices.filter(s =>
-    s.name.toLowerCase().includes(q) || s.server.toLowerCase().includes(q)
+function odFilterServices() {
+  const q = document.getElementById('od-search').value.toLowerCase();
+  const list = odAllServices.filter(s =>
+    s.name.toLowerCase().includes(q) || (s.server||'').toLowerCase().includes(q)
   );
-  renderServiceList(filtered, 'service-list', selectService);
+  renderOdServiceList(list, 'od-svc-list', odSelectService);
 }
 
-function renderServiceList(list, containerId, clickFn) {
+function renderOdServiceList(list, containerId, clickFn) {
   const el = document.getElementById(containerId);
   el.innerHTML = '';
   if (!list.length) {
@@ -971,491 +682,571 @@ function renderServiceList(list, containerId, clickFn) {
     return;
   }
   list.forEach(s => {
-    const card = document.createElement('div');
-    card.className = 'service-card' + (selectedService && selectedService.id === s.id ? ' selected' : '');
-    card.dataset.id = s.id;
-    card.onclick = () => clickFn(s, card, containerId);
-    card.innerHTML = `
-      <div class="service-icon">📱</div>
-      <div class="service-info">
-        <div class="service-name">${escHtml(s.name)}</div>
-        <div class="service-server">${escHtml(s.server || '')}</div>
+    const c = document.createElement('div');
+    c.className = 'svc-card' + (odSelected && odSelected.id === s.id ? ' selected' : '');
+    c.onclick = () => clickFn(s, c, containerId);
+    c.innerHTML = `
+      <div class="svc-icon">📱</div>
+      <div class="svc-info">
+        <div class="svc-name">${esc(s.name)}</div>
+        <div class="svc-server">${esc(s.server||'')}</div>
       </div>
-      <div class="service-price">₹${s.price}</div>
-      <div class="check-icon">✓</div>
-    `;
-    el.appendChild(card);
+      <div class="svc-price">₹${s.price}</div>
+      <div class="svc-check">✓</div>`;
+    el.appendChild(c);
   });
 }
 
-function selectService(s, card, containerId) {
-  document.querySelectorAll(`#${containerId} .service-card`).forEach(c => c.classList.remove('selected'));
+function odSelectService(s, card, containerId) {
+  document.querySelectorAll(`#${containerId} .svc-card`).forEach(c => c.classList.remove('selected'));
   card.classList.add('selected');
-  selectedService = s;
-  const bp = document.getElementById('buy-panel');
-  bp.classList.add('visible');
-  document.getElementById('buy-selected-name').textContent = `${s.name} — ₹${s.price} (${s.server})`;
-  document.getElementById('autoclicker-card').style.display = 'flex';
-  document.getElementById('max-price').placeholder = `Max price (₹, default ₹${s.price})`;
+  odSelected = s;
+  document.getElementById('od-buy-panel').classList.add('visible');
+  document.getElementById('od-buy-sel').textContent = `${s.name} — ₹${s.price} (${s.server||''})`;
+  document.getElementById('od-max-price').placeholder = `Max price ₹ (default ₹${s.price})`;
+  document.getElementById('od-auto-card').classList.add('visible');
 }
 
-// ── JIO SERVICES ──────────────────────────────────────────────────
-async function loadJioServices() {
-  if (allJioServices.length) { filterJio(); return; }
-  document.getElementById('jio-loader').classList.add('active');
-  document.getElementById('jio-list').innerHTML = '';
-  const r = await fetch(`/api/services?api_key=${encodeURIComponent(API_KEY)}&country=in`);
-  const data = await r.json();
-  document.getElementById('jio-loader').classList.remove('active');
-  if (data.ok && data.data) {
-    allJioServices = Object.entries(data.data)
-      .map(([id, v]) => ({ id, name: v.service_name, price: v.service_price, server: v.server_name }))
-      .filter(s => s.name.toLowerCase().includes('jio') || s.server.toLowerCase().includes('jio'));
-  }
-  filterJio();
+async function odBuyNumber() {
+  if (!odSelected) { toast('Select a service first', 'warn'); return; }
+  const maxP = document.getElementById('od-max-price').value.trim();
+  const params = new URLSearchParams({api_key: API_KEY, service: odSelected.id});
+  if (maxP) params.append('maxPrice', maxP);
+  const btn = document.querySelector('#od-buy-panel .btn-green');
+  btn.textContent = '⏳ Buying…'; btn.disabled = true;
+  const r = await fetch(`/od/buy?${params}`);
+  const d = await r.json();
+  btn.textContent = '⚡ Buy Now'; btn.disabled = false;
+  return odHandleBuy(d);
 }
 
-function jioFilter(mode, btn) {
-  jioFilterMode = mode;
-  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  filterJio();
-}
-
-function filterJio() {
-  const q = document.getElementById('jio-search').value.toLowerCase();
-  let list = allJioServices;
-  if (jioFilterMode === 'myjio') {
-    list = list.filter(s => s.name.toLowerCase().startsWith('my jio') && !s.name.toLowerCase().includes('jio.com'));
-  } else if (jioFilterMode === 'jiocom') {
-    list = list.filter(s => s.name.toLowerCase().includes('jio.com'));
-  }
-  if (q) list = list.filter(s => s.name.toLowerCase().includes(q) || s.server.toLowerCase().includes(q));
-  renderServiceList(list, 'jio-list', (s, card) => {
-    // Switch to buy tab and select this service
-    switchTab('buy');
-    setTimeout(() => {
-      const found = allServices.find(x => x.id === s.id) || s;
-      // Simulate click on the main service list if visible
-      selectedService = found;
-      const bp = document.getElementById('buy-panel');
-      bp.classList.add('visible');
-      document.getElementById('buy-selected-name').textContent = `${found.name} — ₹${found.price} (${found.server})`;
-      document.getElementById('autoclicker-card').style.display = 'flex';
-      document.getElementById('max-price').placeholder = `Max price (₹, default ₹${found.price})`;
-      // Scroll to buy panel
-      bp.scrollIntoView({ behavior: 'smooth' });
-      toast(`Selected: ${found.name}`, 'success');
-    }, 100);
-  });
-}
-
-// ── BUY NUMBER ────────────────────────────────────────────────────
-async function buyNumber() {
-  if (!selectedService) { toast('Select a service first', 'warn'); return; }
-  const maxPrice = document.getElementById('max-price').value.trim();
-  const params = new URLSearchParams({
-    api_key: API_KEY,
-    service: selectedService.id
-  });
-  if (maxPrice) params.append('maxPrice', maxPrice);
-  const btn = document.querySelector('#buy-panel .btn-green');
-  btn.textContent = '⏳ Buying…';
-  btn.disabled = true;
-  const r = await fetch(`/api/buy?${params}`);
-  const data = await r.json();
-  btn.textContent = '⚡ Buy Now';
-  btn.disabled = false;
-  return handleBuyResponse(data);
-}
-
-function handleBuyResponse(data) {
-  if (!data.ok) { toast(data.error || 'API error', 'error'); return false; }
-  const raw = data.raw || '';
-  const json = data.data;
-  // Parse ACCESS_NUMBER:id:phone or error codes
+function odHandleBuy(d) {
+  if (!d.ok) { toast(d.error || 'API error', 'error'); return false; }
+  const raw = d.raw || '';
+  const json = d.data;
   let parsed = null;
-  if (json) {
-    if (json.ACCESS_NUMBER !== undefined) parsed = json;
-  }
+  if (json && json.activation_id) parsed = json;
   if (!parsed && raw) {
     if (raw.startsWith('ACCESS_NUMBER:')) {
-      const parts = raw.split(':');
-      if (parts.length >= 3) parsed = { ACCESS_NUMBER: true, activation_id: parts[1], phone: parts[2] };
-    } else if (raw === 'NO_NUMBERS') { toast('No numbers available, try again later.', 'warn'); return false; }
-    else if (raw === 'NO_BALANCE')  { toast('Insufficient balance!', 'error'); return false; }
-    else if (raw === 'BAD_SERVICE') { toast('Invalid service ID.', 'error'); return false; }
-    else if (raw === 'PRICE_TOO_HIGH') { toast('Price too high for this service.', 'warn'); return false; }
-    else if (raw === 'TRY_AGAIN')   { toast('Temporary error, please try again.', 'warn'); return false; }
-    else { toast('Unexpected response: ' + raw, 'warn'); return false; }
+      const p = raw.split(':');
+      if (p.length >= 3) parsed = {activation_id: p[1], phone: p[2]};
+    } else if (raw === 'NO_NUMBERS')    { toast('No numbers available, try again later.', 'warn'); return false; }
+    else if (raw === 'NO_BALANCE')      { toast('Insufficient balance!', 'error'); return false; }
+    else if (raw === 'BAD_SERVICE')     { toast('Invalid service ID.', 'error'); return false; }
+    else if (raw === 'PRICE_TOO_HIGH')  { toast('Price too high.', 'warn'); return false; }
+    else if (raw === 'TRY_AGAIN')       { toast('Temporary error, retrying…', 'warn'); return false; }
+    else { toast('Response: ' + raw, 'warn'); return false; }
   }
   if (!parsed) { toast('Could not parse response', 'error'); return false; }
-
-  const numObj = {
+  const num = {
+    site: 'od',
     id: String(parsed.activation_id || parsed.id || ''),
     phone: String(parsed.phone || ''),
-    service: selectedService.name,
-    price: selectedService.price,
-    server: selectedService.server,
-    serviceId: selectedService.id,
-    status: 'waiting',
-    sms: null,
-    boughtAt: Date.now(),
-    expiresAt: Date.now() + 20 * 60 * 1000  // 20 min default
+    service: odSelected.name, price: odSelected.price, server: odSelected.server, serviceId: odSelected.id,
+    status: 'waiting', sms: null,
+    boughtAt: Date.now(), expiresAt: Date.now() + 20 * 60 * 1000
   };
-  activeNumbers.unshift(numObj);
-  saveNumbers();
-  renderOrders();
-  renderActiveBuy();
-  startPolling(numObj.id);
-  startTimer(numObj.id);
-  toast(`Number purchased: ${numObj.phone}`, 'success');
-  playSound();
-  refreshBalance();
+  activeNumbers.unshift(num);
+  saveNumbers(); renderActive(); renderOdOrders();
+  startPolling(num.id); startTimer(num.id);
+  toast(`Number purchased: ${num.phone}`, 'success'); playSound(); refreshBalance();
   return true;
 }
 
-// ── AUTO CLICKER ──────────────────────────────────────────────────
-function toggleAutoClicker() {
-  if (!selectedService) { toast('Select a service before enabling Auto Clicker', 'warn'); return; }
-  autoClickerOn = !autoClickerOn;
-  const btn = document.getElementById('auto-toggle');
-  const txt = document.getElementById('auto-status-text');
-  btn.classList.toggle('on', autoClickerOn);
-  if (autoClickerOn) {
-    txt.textContent = 'Active — buying until a number is received…';
-    toast('Auto Clicker activated', 'success');
-    runAutoClicker();
+// OTP Doctor polling
+function startPolling(id) {
+  if (pollingMap[id]) return;
+  const num = activeNumbers.find(n => n.id === id);
+  if (!num) return;
+  if (num.site === 'od') {
+    pollingMap[id] = setInterval(() => odPollSms(id), 8000);
   } else {
-    stopAutoClicker();
-    txt.textContent = 'Tap to activate — keeps buying until a number is received';
+    pollingMap[id] = setInterval(() => osPollOtp(id), 8000);
+  }
+}
+
+async function odPollSms(id) {
+  const num = activeNumbers.find(n => n.id === id);
+  if (!num || num.status !== 'waiting') { clearInterval(pollingMap[id]); delete pollingMap[id]; return; }
+  const r = await fetch(`/od/status?api_key=${enc(API_KEY)}&id=${enc(id)}`);
+  const d = await r.json();
+  if (!d.ok) return;
+  const raw = d.raw || '';
+  const json = d.data;
+  let sr = typeof json === 'string' ? json : raw;
+  if (json && json.STATUS_OK) sr = 'STATUS_OK:' + json.SMS_TEXT;
+  if (sr.startsWith('STATUS_OK:')) {
+    const sms = sr.replace('STATUS_OK:','').trim();
+    num.status = 'received'; num.sms = sms;
+    saveNumbers(); renderActive(); renderOdOrders();
+    toast(`OTP received for ${num.phone}!`, 'success'); playSound();
+    clearInterval(pollingMap[id]); delete pollingMap[id];
+  } else if (sr === 'STATUS_CANCEL') {
+    num.status = 'cancelled';
+    saveNumbers(); renderActive(); renderOdOrders();
+    clearInterval(pollingMap[id]); delete pollingMap[id];
+  }
+}
+
+async function odCheckSmsManual(id) {
+  toast('Checking SMS…', '');
+  const r = await fetch(`/od/status?api_key=${enc(API_KEY)}&id=${enc(id)}`);
+  const d = await r.json();
+  if (!d.ok) { toast('Error checking SMS', 'error'); return; }
+  const raw = d.raw || '';
+  const json = d.data;
+  let sr = typeof json === 'string' ? json : raw;
+  if (json && json.STATUS_OK) sr = 'STATUS_OK:' + json.SMS_TEXT;
+  const num = activeNumbers.find(n => n.id === id);
+  if (!num) return;
+  if (sr.startsWith('STATUS_OK:')) {
+    num.status = 'received'; num.sms = sr.replace('STATUS_OK:','').trim();
+    saveNumbers(); renderActive(); renderOdOrders();
+    toast(`OTP: ${num.sms}`, 'success'); playSound();
+  } else if (sr === 'STATUS_WAIT_CODE') {
+    toast('Still waiting for SMS…', 'warn');
+  } else if (sr === 'STATUS_CANCEL') {
+    num.status = 'cancelled';
+    saveNumbers(); renderActive(); renderOdOrders();
+    toast('Cancelled', 'warn');
+  } else { toast('Status: ' + sr, ''); }
+}
+
+function odToggleAuto() {
+  if (!odSelected) { toast('Select a service first', 'warn'); return; }
+  odAutoOn = !odAutoOn;
+  document.getElementById('od-auto-toggle').classList.toggle('on', odAutoOn);
+  if (odAutoOn) {
+    document.getElementById('od-auto-txt').textContent = 'Active — buying until a number is received…';
+    toast('Auto Clicker activated', 'success');
+    odRunAuto();
+  } else {
+    stopOdAuto();
     toast('Auto Clicker stopped', 'warn');
   }
 }
 
-function stopAutoClicker() {
-  autoClickerOn = false;
-  if (autoClickerInterval) { clearInterval(autoClickerInterval); autoClickerInterval = null; }
-  const btn = document.getElementById('auto-toggle');
-  if (btn) btn.classList.remove('on');
-  const txt = document.getElementById('auto-status-text');
+async function odRunAuto() {
+  if (!odAutoOn) return;
+  const attempt = async () => {
+    if (!odAutoOn || !odSelected) { stopOdAuto(); return; }
+    const params = new URLSearchParams({api_key: API_KEY, service: odSelected.id});
+    const mp = document.getElementById('od-max-price').value.trim();
+    if (mp) params.append('maxPrice', mp);
+    const r = await fetch(`/od/buy?${params}`);
+    const d = await r.json();
+    const ok = odHandleBuy(d);
+    if (ok) { stopOdAuto(); document.getElementById('od-auto-txt').textContent = 'Number Purchased ✓'; }
+  };
+  await attempt();
+  if (odAutoOn) odAutoTimer = setInterval(attempt, 5000);
+}
+
+function stopOdAuto() {
+  odAutoOn = false;
+  if (odAutoTimer) { clearInterval(odAutoTimer); odAutoTimer = null; }
+  const t = document.getElementById('od-auto-toggle'); if (t) t.classList.remove('on');
+  const txt = document.getElementById('od-auto-txt');
   if (txt) txt.textContent = 'Tap to activate — keeps buying until a number is received';
 }
 
-async function runAutoClicker() {
-  if (!autoClickerOn) return;
-  // Attempt immediately, then every 5s
+async function odCancelNumber(id) {
+  closeModal('cancel-modal');
+  const r = await fetch(`/od/set_status?api_key=${enc(API_KEY)}&id=${enc(id)}&status=8`);
+  const d = await r.json();
+  const num = activeNumbers.find(n => n.id === id);
+  if (num) { num.status = 'cancelled'; saveNumbers(); renderActive(); renderOdOrders(); }
+  toast('Activation cancelled', 'warn'); refreshBalance();
+}
+
+async function odRebuy(id) {
+  const num = activeNumbers.find(n => n.id === id);
+  if (!num) return;
+  const r = await fetch(`/od/set_status?api_key=${enc(API_KEY)}&id=${enc(id)}&status=3`);
+  const d = await r.json();
+  const raw = d.raw || '';
+  if (raw === 'ACCESS_RETRY_GET' || (d.data && d.data.ACCESS_RETRY_GET)) {
+    num.status = 'waiting'; num.sms = null;
+    saveNumbers(); renderActive(); renderOdOrders();
+    toast('Requested another SMS', 'success'); startPolling(id);
+  } else { toast('Response: ' + raw, ''); }
+}
+
+// OTP Doctor Jio tab
+async function odLoadJio() {
+  if (odJioServices.length) { odFilterJio(); return; }
+  document.getElementById('od-jio-loader').classList.add('active');
+  const r = await fetch(`/od/services?api_key=${enc(API_KEY)}&country=in`);
+  const d = await r.json();
+  document.getElementById('od-jio-loader').classList.remove('active');
+  if (d.ok && d.data) {
+    odJioServices = Object.entries(d.data)
+      .map(([id, v]) => ({id, name: v.service_name, price: v.service_price, server: v.server_name}))
+      .filter(s => s.name.toLowerCase().includes('jio') || (s.server||'').toLowerCase().includes('jio'));
+  }
+  odFilterJio();
+}
+
+function odJioFilter(mode, btn) {
+  odJioMode = mode;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  odFilterJio();
+}
+
+function odFilterJio() {
+  const q = document.getElementById('od-jio-search').value.toLowerCase();
+  let list = odJioServices;
+  if (odJioMode === 'myjio')  list = list.filter(s => s.name.toLowerCase().startsWith('my jio') && !s.name.toLowerCase().includes('jio.com'));
+  if (odJioMode === 'jiocom') list = list.filter(s => s.name.toLowerCase().includes('jio.com'));
+  if (q) list = list.filter(s => s.name.toLowerCase().includes(q));
+  renderOdServiceList(list, 'od-jio-list', (s, card) => {
+    switchTab('od', 'buy');
+    setTimeout(() => {
+      const found = odAllServices.find(x => x.id === s.id) || s;
+      odSelected = found;
+      document.getElementById('od-buy-panel').classList.add('visible');
+      document.getElementById('od-buy-sel').textContent = `${found.name} — ₹${found.price} (${found.server||''})`;
+      document.getElementById('od-auto-card').classList.add('visible');
+      document.getElementById('od-buy-panel').scrollIntoView({behavior:'smooth'});
+      toast(`Selected: ${found.name}`, 'success');
+    }, 80);
+  });
+}
+
+// OTP Doctor orders
+function renderOdOrders() {
+  const nums = activeNumbers.filter(n => n.site === 'od');
+  const el = document.getElementById('od-orders-list');
+  if (!nums.length) { el.innerHTML = '<div class="empty"><div class="emoji">📋</div><p>No orders yet.</p></div>'; return; }
+  el.innerHTML = nums.map(n => numCardHtml(n)).join('');
+}
+
+// ══════════════════════════════════════════════════════════════════
+// OTP SERVICE
+// ══════════════════════════════════════════════════════════════════
+
+function osRenderServices() {
+  osAllServices = [...OS_SERVICES];
+  osFilterServices();
+}
+
+function osFilterServices() {
+  const q = document.getElementById('os-search').value.toLowerCase();
+  const list = osAllServices.filter(s =>
+    s.name.toLowerCase().includes(q) || s.code.toLowerCase().includes(q)
+  );
+  const grid = document.getElementById('os-svc-grid');
+  grid.innerHTML = '';
+  if (!list.length) {
+    grid.innerHTML = '<div class="empty"><div class="emoji">🔍</div><p>No services found.</p></div>';
+    return;
+  }
+  list.forEach(s => {
+    const c = document.createElement('div');
+    c.className = 'os-svc-card' + (osSelected && osSelected.code === s.code ? ' selected' : '');
+    c.onclick = () => osSelectService(s, c);
+    c.innerHTML = `
+      <div class="os-chk">✓</div>
+      <div class="os-icon">${s.icon}</div>
+      <div class="os-name">${esc(s.name)}</div>
+      <div class="os-code">${esc(s.code)}</div>`;
+    grid.appendChild(c);
+  });
+}
+
+function osSelectService(s, card) {
+  document.querySelectorAll('#os-svc-grid .os-svc-card').forEach(c => c.classList.remove('selected'));
+  card.classList.add('selected');
+  osSelected = s;
+  document.getElementById('os-buy-panel').classList.add('visible');
+  document.getElementById('os-buy-sel').textContent = `${s.name} (service code: ${s.code})`;
+  document.getElementById('os-auto-card').classList.add('visible');
+}
+
+async function osBuyNumber() {
+  if (!osSelected) { toast('Select a service first', 'warn'); return; }
+  const btn = document.querySelector('#os-buy-panel .btn-blue');
+  btn.textContent = '⏳ Buying…'; btn.disabled = true;
+  const r = await fetch(`/os/buy?api_key=${enc(API_KEY)}&service=${enc(osSelected.code)}`);
+  const d = await r.json();
+  btn.textContent = '⚡ Buy Now'; btn.disabled = false;
+  return osHandleBuy(d);
+}
+
+function osHandleBuy(d) {
+  if (!d.ok) { toast(d.error || 'API error', 'error'); return false; }
+  const json = d.data || d.raw;
+  // Expected: {success:true, data:{transactionId, phoneNumber, canGetAnotherSms}, updatedBalance}
+  if (typeof json === 'string') {
+    toast('Response: ' + json, 'warn'); return false;
+  }
+  if (!json.success) {
+    toast(json.message || 'Purchase failed', 'error'); return false;
+  }
+  const data = json.data || {};
+  const num = {
+    site: 'os',
+    id: String(data.transactionId || ''),
+    phone: String(data.phoneNumber || ''),
+    service: osSelected.name, price: '–', server: osSelected.code, serviceId: osSelected.code,
+    canGetAnotherSms: data.canGetAnotherSms || 0,
+    updatedBalance: json.updatedBalance,
+    status: 'waiting', sms: null,
+    boughtAt: Date.now(), expiresAt: Date.now() + 20 * 60 * 1000
+  };
+  activeNumbers.unshift(num);
+  saveNumbers(); renderActive(); renderOsOrders();
+  startPolling(num.id); startTimer(num.id);
+  toast(`Number purchased: ${num.phone}`, 'success'); playSound();
+  // Update balance from response
+  if (json.updatedBalance !== undefined) {
+    document.getElementById('balance-val').textContent = json.updatedBalance;
+  }
+  return true;
+}
+
+async function osPollOtp(id) {
+  const num = activeNumbers.find(n => n.id === id);
+  if (!num || num.status !== 'waiting') { clearInterval(pollingMap[id]); delete pollingMap[id]; return; }
+  const r = await fetch(`/os/otp?api_key=${enc(API_KEY)}&transactionId=${enc(id)}`);
+  const d = await r.json();
+  if (!d.ok) return;
+  const json = d.data;
+  if (json && json.success && json.otp) {
+    num.status = 'received'; num.sms = json.otp;
+    saveNumbers(); renderActive(); renderOsOrders();
+    toast(`OTP received: ${json.otp}`, 'success'); playSound();
+    clearInterval(pollingMap[id]); delete pollingMap[id];
+  }
+}
+
+async function osCheckOtpManual(id) {
+  toast('Checking OTP…', '');
+  const r = await fetch(`/os/otp?api_key=${enc(API_KEY)}&transactionId=${enc(id)}`);
+  const d = await r.json();
+  if (!d.ok) { toast('Error checking OTP', 'error'); return; }
+  const json = d.data;
+  const num = activeNumbers.find(n => n.id === id);
+  if (!num) return;
+  if (json && json.success && json.otp) {
+    num.status = 'received'; num.sms = json.otp;
+    saveNumbers(); renderActive(); renderOsOrders();
+    toast(`OTP: ${json.otp}`, 'success'); playSound();
+  } else {
+    toast('No OTP yet, still waiting…', 'warn');
+  }
+}
+
+function osToggleAuto() {
+  if (!osSelected) { toast('Select a service first', 'warn'); return; }
+  osAutoOn = !osAutoOn;
+  document.getElementById('os-auto-toggle').classList.toggle('on', osAutoOn);
+  if (osAutoOn) {
+    document.getElementById('os-auto-txt').textContent = 'Active — buying until a number is received…';
+    toast('Auto Clicker activated', 'success');
+    osRunAuto();
+  } else {
+    stopOsAuto();
+    toast('Auto Clicker stopped', 'warn');
+  }
+}
+
+async function osRunAuto() {
+  if (!osAutoOn) return;
   const attempt = async () => {
-    if (!autoClickerOn || !selectedService) { stopAutoClicker(); return; }
-    const params = new URLSearchParams({ api_key: API_KEY, service: selectedService.id });
-    const maxPrice = document.getElementById('max-price').value.trim();
-    if (maxPrice) params.append('maxPrice', maxPrice);
-    const r = await fetch(`/api/buy?${params}`);
-    const data = await r.json();
-    const success = handleBuyResponse(data);
-    if (success) {
-      stopAutoClicker();
-      document.getElementById('auto-status-text').textContent = 'Number Purchased ✓';
-    }
+    if (!osAutoOn || !osSelected) { stopOsAuto(); return; }
+    const r = await fetch(`/os/buy?api_key=${enc(API_KEY)}&service=${enc(osSelected.code)}`);
+    const d = await r.json();
+    const ok = osHandleBuy(d);
+    if (ok) { stopOsAuto(); document.getElementById('os-auto-txt').textContent = 'Number Purchased ✓'; }
   };
   await attempt();
-  if (autoClickerOn) {
-    autoClickerInterval = setInterval(attempt, 5000);
-  }
+  if (osAutoOn) osAutoTimer = setInterval(attempt, 5000);
 }
 
-// ── POLLING (check for SMS) ───────────────────────────────────────
-function startPolling(id) {
-  if (pollingIntervals[id]) return;
-  pollingIntervals[id] = setInterval(() => pollSms(id), 8000);
+function stopOsAuto() {
+  osAutoOn = false;
+  if (osAutoTimer) { clearInterval(osAutoTimer); osAutoTimer = null; }
+  const t = document.getElementById('os-auto-toggle'); if (t) t.classList.remove('on');
+  const txt = document.getElementById('os-auto-txt');
+  if (txt) txt.textContent = 'Tap to activate — keeps buying until a number is received';
 }
 
-async function pollSms(id) {
-  const num = activeNumbers.find(n => n.id === id);
-  if (!num || num.status === 'cancelled' || num.status === 'received') {
-    clearInterval(pollingIntervals[id]);
-    delete pollingIntervals[id];
-    return;
-  }
-  const r = await fetch(`/api/status?api_key=${encodeURIComponent(API_KEY)}&id=${encodeURIComponent(id)}`);
-  const data = await r.json();
-  if (!data.ok) return;
-  const raw = data.raw || '';
-  const json = data.data;
-  let statusRaw = '';
-  if (json && json.STATUS_OK) statusRaw = 'STATUS_OK:' + json.SMS_TEXT;
-  else if (typeof json === 'string') statusRaw = json;
-  else statusRaw = raw;
-
-  if (statusRaw.startsWith('STATUS_OK:')) {
-    const sms = statusRaw.replace('STATUS_OK:', '').trim();
-    num.status = 'received';
-    num.sms = sms;
-    saveNumbers();
-    renderOrders();
-    renderActiveBuy();
-    playSound();
-    toast(`OTP received for ${num.phone}!`, 'success');
-    clearInterval(pollingIntervals[id]);
-    delete pollingIntervals[id];
-  } else if (statusRaw === 'STATUS_CANCEL') {
-    num.status = 'cancelled';
-    saveNumbers();
-    renderOrders();
-    renderActiveBuy();
-    clearInterval(pollingIntervals[id]);
-    delete pollingIntervals[id];
-  }
-}
-
-async function checkSmsManual(id) {
-  const num = activeNumbers.find(n => n.id === id);
-  if (!num) return;
-  toast('Checking SMS…', '');
-  const r = await fetch(`/api/status?api_key=${encodeURIComponent(API_KEY)}&id=${encodeURIComponent(id)}`);
-  const data = await r.json();
-  if (!data.ok) { toast('Error checking SMS', 'error'); return; }
-  const raw = data.raw || '';
-  const json = data.data;
-  let statusRaw = '';
-  if (json && json.STATUS_OK) statusRaw = 'STATUS_OK:' + json.SMS_TEXT;
-  else if (typeof json === 'string') statusRaw = json;
-  else statusRaw = raw;
-
-  if (statusRaw.startsWith('STATUS_OK:')) {
-    const sms = statusRaw.replace('STATUS_OK:', '').trim();
-    num.status = 'received';
-    num.sms = sms;
-    saveNumbers(); renderOrders(); renderActiveBuy();
-    toast(`OTP received: ${sms}`, 'success');
-    playSound();
-  } else if (statusRaw === 'STATUS_WAIT_CODE') {
-    toast('Still waiting for SMS…', 'warn');
-  } else if (statusRaw === 'STATUS_CANCEL') {
-    num.status = 'cancelled';
-    saveNumbers(); renderOrders(); renderActiveBuy();
-    toast('Activation cancelled', 'warn');
-  } else {
-    toast('Status: ' + statusRaw, '');
-  }
-}
-
-// ── TIMER ────────────────────────────────────────────────────────
-function startTimer(id) {
-  if (timerIntervals[id]) return;
-  timerIntervals[id] = setInterval(() => updateTimer(id), 1000);
-}
-
-function updateTimer(id) {
-  const num = activeNumbers.find(n => n.id === id);
-  if (!num) { clearInterval(timerIntervals[id]); delete timerIntervals[id]; return; }
-  const remaining = Math.max(0, Math.floor((num.expiresAt - Date.now()) / 1000));
-  const mins = String(Math.floor(remaining / 60)).padStart(2, '0');
-  const secs = String(remaining % 60).padStart(2, '0');
-  const timerEl = document.querySelector(`[data-timer-id="${id}"]`);
-  if (timerEl) {
-    timerEl.textContent = `${mins}:${secs}`;
-    timerEl.classList.toggle('low', remaining < 60);
-  }
-  if (remaining === 0) {
-    clearInterval(timerIntervals[id]);
-    delete timerIntervals[id];
-    if (num.status === 'waiting') {
-      num.status = 'expired';
-      saveNumbers(); renderOrders(); renderActiveBuy();
-    }
-  }
-}
-
-// ── CANCEL ───────────────────────────────────────────────────────
-function confirmCancel(id) {
-  pendingCancelId = id;
-  document.getElementById('cancel-modal').classList.add('open');
-  document.getElementById('confirm-cancel-btn').onclick = () => cancelNumber(id);
-}
-
-async function cancelNumber(id) {
+async function osCancelNumber(id) {
   closeModal('cancel-modal');
-  const r = await fetch(`/api/set_status?api_key=${encodeURIComponent(API_KEY)}&id=${encodeURIComponent(id)}&status=8`);
-  const data = await r.json();
-  const raw = data.raw || '';
+  const r = await fetch(`/os/cancel?api_key=${enc(API_KEY)}&transactionId=${enc(id)}`);
+  const d = await r.json();
   const num = activeNumbers.find(n => n.id === id);
-  if (num) { num.status = 'cancelled'; saveNumbers(); renderOrders(); renderActiveBuy(); }
-  if (raw === 'STATUS_CANCEL' || (data.data && data.data.STATUS_CANCEL)) {
-    toast('Activation cancelled', 'warn');
-  } else {
-    toast('Cancel sent', 'warn');
-  }
-  refreshBalance();
+  if (num) { num.status = 'cancelled'; saveNumbers(); renderActive(); renderOsOrders(); }
+  const json = d.data;
+  if (json && json.success) toast('Number cancelled successfully', 'warn');
+  else toast('Cancel sent', 'warn');
 }
 
-async function rebuyNumber(id) {
-  const num = activeNumbers.find(n => n.id === id);
-  if (!num) return;
-  // Request another SMS (status=3)
-  const r = await fetch(`/api/set_status?api_key=${encodeURIComponent(API_KEY)}&id=${encodeURIComponent(id)}&status=3`);
-  const data = await r.json();
-  const raw = data.raw || '';
-  if (raw === 'ACCESS_RETRY_GET' || (data.data && data.data.ACCESS_RETRY_GET)) {
-    num.status = 'waiting';
-    num.sms = null;
-    saveNumbers(); renderOrders(); renderActiveBuy();
-    toast('Requested another SMS', 'success');
-    startPolling(id);
-  } else {
-    toast('Response: ' + raw, '');
-  }
+function renderOsOrders() {
+  const nums = activeNumbers.filter(n => n.site === 'os');
+  const el = document.getElementById('os-orders-list');
+  if (!nums.length) { el.innerHTML = '<div class="empty"><div class="emoji">📋</div><p>No orders yet.</p></div>'; return; }
+  el.innerHTML = nums.map(n => numCardHtml(n)).join('');
 }
 
-// ── RENDER ACTIVE NUMBERS ─────────────────────────────────────────
-function renderActiveBuy() {
-  const active = activeNumbers.filter(n => n.status === 'waiting' || n.status === 'received');
-  const el = document.getElementById('active-buy-list');
-  if (!active.length) {
-    el.innerHTML = `<div class="empty"><div class="emoji">📭</div><p>No active numbers yet.<br>Select a service above and tap Buy Now.</p></div>`;
+// ══ SHARED RENDER ════════════════════════════════════════════════
+function renderActive() {
+  const isOd = SITE === 'od';
+  const nums = activeNumbers.filter(n => n.site === SITE && (n.status === 'waiting' || n.status === 'received'));
+  const el = document.getElementById(isOd ? 'od-active-list' : 'os-active-list');
+  if (!nums.length) {
+    el.innerHTML = '<div class="empty"><div class="emoji">📭</div><p>No active numbers yet.</p></div>';
     return;
   }
-  el.innerHTML = active.map(n => numCardHtml(n)).join('');
-}
-
-function renderOrders() {
-  const el = document.getElementById('orders-list');
-  if (!activeNumbers.length) {
-    el.innerHTML = `<div class="empty"><div class="emoji">📋</div><p>No orders yet.</p></div>`;
-    return;
-  }
-  el.innerHTML = activeNumbers.map(n => numCardHtml(n)).join('');
+  el.innerHTML = nums.map(n => numCardHtml(n)).join('');
 }
 
 function numCardHtml(n) {
-  const remaining = Math.max(0, Math.floor((n.expiresAt - Date.now()) / 1000));
-  const mins = String(Math.floor(remaining / 60)).padStart(2, '0');
-  const secs = String(remaining % 60).padStart(2, '0');
-  const timerStr = `${mins}:${secs}`;
-  const timerClass = remaining < 60 ? 'low' : '';
-  const isActive = n.status === 'waiting';
+  const rem = Math.max(0, Math.floor((n.expiresAt - Date.now()) / 1000));
+  const mm = String(Math.floor(rem/60)).padStart(2,'0');
+  const ss = String(rem%60).padStart(2,'0');
+  const isWaiting  = n.status === 'waiting';
   const isReceived = n.status === 'received';
-  const isCancelled = n.status === 'cancelled' || n.status === 'expired';
+  const isDone     = !isWaiting && !isReceived;
 
-  let statusBadge = '';
-  if (isReceived) statusBadge = '<span class="badge badge-grn">✓ Received</span>';
-  else if (isCancelled) statusBadge = `<span class="badge badge-red">${n.status === 'expired' ? '⌛ Expired' : '✕ Cancelled'}</span>`;
+  let badge = '';
+  if (isReceived) badge = '<span class="badge badge-grn">✓ Received</span>';
+  else if (isDone) badge = `<span class="badge badge-red">${n.status === 'expired' ? '⌛ Expired' : '✕ Cancelled'}</span>`;
 
-  let smsBlock = '';
-  if (n.sms) {
-    smsBlock = `<div class="sms-text">📩 ${escHtml(n.sms)}</div>`;
-  }
+  let statusRow = isWaiting
+    ? `<div class="num-status">Waiting for SMS/OTP <div class="dot-pulse"><span></span><span></span><span></span></div></div>`
+    : isReceived
+    ? `<div class="num-status" style="color:var(--green);">✓ Received</div>`
+    : `<div class="num-status">${n.status}</div>`;
 
-  let statusRow = '';
-  if (isActive) {
-    statusRow = `<div class="num-status">Waiting for SMS <div class="dot-pulse"><span></span><span></span><span></span></div></div>`;
-  } else if (isReceived) {
-    statusRow = `<div class="num-status" style="color:var(--green);">✓ SMS Received</div>`;
-  } else {
-    statusRow = `<div class="num-status">${n.status}</div>`;
-  }
+  let smsBlock = n.sms
+    ? `<div class="sms-box">📩 OTP / SMS: <strong>${esc(n.sms)}</strong></div>`
+    : '';
 
   let actions = '';
-  if (isActive) {
-    actions = `
-      <button class="btn btn-ghost btn-sm" onclick="checkSmsManual('${n.id}')">💬 Check SMS</button>
-      <button class="btn btn-green btn-sm" onclick="rebuyNumber('${n.id}')">🔄 Rebuy</button>
-      <button class="btn btn-danger btn-sm" onclick="confirmCancel('${n.id}')">✕ Cancel</button>
-    `;
-  } else if (isReceived) {
-    actions = `
-      <button class="btn btn-ghost btn-sm" onclick="copyText('${escHtml(n.sms || '')}')">📋 Copy OTP</button>
-      <button class="btn btn-green btn-sm" onclick="rebuyNumber('${n.id}')">🔄 Rebuy</button>
-    `;
+  if (n.site === 'od') {
+    if (isWaiting) {
+      actions = `
+        <button class="btn btn-ghost btn-sm" onclick="odCheckSmsManual('${n.id}')">💬 Check SMS</button>
+        <button class="btn btn-green btn-sm" onclick="odRebuy('${n.id}')">🔄 Rebuy</button>
+        <button class="btn btn-danger btn-sm" onclick="confirmCancel('${n.id}','od')">✕ Cancel</button>`;
+    } else if (isReceived) {
+      actions = `
+        <button class="btn btn-ghost btn-sm" onclick="copyTxt('${esc(n.sms||'')}')">📋 Copy OTP</button>
+        <button class="btn btn-green btn-sm" onclick="odRebuy('${n.id}')">🔄 Rebuy</button>`;
+    }
   } else {
-    actions = `<span style="font-size:13px;color:var(--muted);">${n.status}</span>`;
+    if (isWaiting) {
+      actions = `
+        <button class="btn btn-ghost btn-sm" onclick="osCheckOtpManual('${n.id}')">💬 Check OTP</button>
+        <button class="btn btn-danger btn-sm" onclick="confirmCancel('${n.id}','os')">✕ Cancel</button>`;
+    } else if (isReceived) {
+      actions = `
+        <button class="btn btn-ghost btn-sm" onclick="copyTxt('${esc(n.sms||'')}')">📋 Copy OTP</button>`;
+    }
   }
 
   return `
     <div class="num-card">
       <div class="num-card-head">
         <div>
-          <div class="num-service-name">${escHtml(n.service)} ${statusBadge}</div>
-          <div class="num-price">₹${n.price} · ${escHtml(n.server || '')}</div>
+          <div class="num-svc">${esc(n.service)} ${badge}</div>
+          <div class="num-price">₹${n.price} · ${esc(n.server||'')}</div>
         </div>
-        ${isActive ? `<div class="num-timer ${timerClass}" data-timer-id="${n.id}">${timerStr}</div>` : ''}
+        ${isWaiting ? `<div class="num-timer ${rem<60?'low':''}" data-timer-id="${n.id}">${mm}:${ss}</div>` : ''}
       </div>
       <div class="num-body">
         <div>
-          <div class="num-phone">${escHtml(n.phone)}</div>
+          <div class="num-phone">${esc(n.phone)}</div>
           ${statusRow}
         </div>
-        <button class="btn btn-ghost btn-sm" onclick="copyText('${n.phone}')">📋 Copy</button>
+        <button class="btn btn-ghost btn-sm" onclick="copyTxt('${n.phone}')">📋 Copy</button>
       </div>
       ${smsBlock}
       <div class="num-actions">${actions}</div>
-    </div>
-  `;
+    </div>`;
 }
 
-// ── UTILS ──────────────────────────────────────────────────────────
+// ══ TIMER ════════════════════════════════════════════════════════
+function startTimer(id) {
+  if (timerMap[id]) return;
+  timerMap[id] = setInterval(() => {
+    const num = activeNumbers.find(n => n.id === id);
+    if (!num) { clearInterval(timerMap[id]); delete timerMap[id]; return; }
+    const rem = Math.max(0, Math.floor((num.expiresAt - Date.now()) / 1000));
+    const el = document.querySelector(`[data-timer-id="${id}"]`);
+    if (el) {
+      el.textContent = `${String(Math.floor(rem/60)).padStart(2,'0')}:${String(rem%60).padStart(2,'0')}`;
+      el.classList.toggle('low', rem < 60);
+    }
+    if (rem === 0) {
+      clearInterval(timerMap[id]); delete timerMap[id];
+      if (num.status === 'waiting') {
+        num.status = 'expired'; saveNumbers(); renderActive();
+        if (num.site === 'od') renderOdOrders(); else renderOsOrders();
+      }
+    }
+  }, 1000);
+}
+
+// ══ CANCEL MODAL ═════════════════════════════════════════════════
+function confirmCancel(id, site) {
+  pendingCancel = {id, site};
+  document.getElementById('cancel-modal').classList.add('open');
+  document.getElementById('confirm-cancel-btn').onclick = () => {
+    if (site === 'od') odCancelNumber(id);
+    else osCancelNumber(id);
+  };
+}
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+document.getElementById('cancel-modal').addEventListener('click', function(e) {
+  if (e.target === this) closeModal('cancel-modal');
+});
+
+// ══ UTILS ════════════════════════════════════════════════════════
 function saveNumbers() {
-  // Keep max 50
-  if (activeNumbers.length > 50) activeNumbers = activeNumbers.slice(0, 50);
-  localStorage.setItem('otp_active_numbers', JSON.stringify(activeNumbers));
+  if (activeNumbers.length > 60) activeNumbers = activeNumbers.slice(0,60);
+  localStorage.setItem('otp_numbers', JSON.stringify(activeNumbers));
 }
-
-function copyText(text) {
+function enc(s) { return encodeURIComponent(s||''); }
+function esc(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+function copyTxt(text) {
   if (!text) return;
-  navigator.clipboard.writeText(text).then(() => toast('Copied!', 'success'))
+  navigator.clipboard.writeText(text)
+    .then(() => toast('Copied!','success'))
     .catch(() => {
-      // Fallback
       const ta = document.createElement('textarea');
-      ta.value = text;
-      document.body.appendChild(ta);
-      ta.select();
-      document.execCommand('copy');
-      document.body.removeChild(ta);
-      toast('Copied!', 'success');
+      ta.value = text; document.body.appendChild(ta); ta.select();
+      document.execCommand('copy'); document.body.removeChild(ta);
+      toast('Copied!','success');
     });
 }
-
-function escHtml(str) {
-  return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-}
-
-let toastTimer = null;
-function toast(msg, type = '') {
+function toast(msg, type='') {
   const el = document.getElementById('toast');
   el.textContent = msg;
-  el.className = 'show' + (type ? ' ' + type : '');
-  if (toastTimer) clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => { el.className = ''; }, 3000);
+  el.className = 'show' + (type?' '+type:'');
+  if (toastTmr) clearTimeout(toastTmr);
+  toastTmr = setTimeout(() => { el.className=''; }, 3000);
 }
-
-function closeModal(id) {
-  document.getElementById(id).classList.remove('open');
-}
-
 function playSound() {
-  if (!soundEnabled) return;
   try {
-    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const ctx = new (window.AudioContext||window.webkitAudioContext)();
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
     osc.connect(gain); gain.connect(ctx.destination);
     osc.frequency.value = 880;
     gain.gain.setValueAtTime(0.3, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
-    osc.start(); osc.stop(ctx.currentTime + 0.5);
-  } catch(e) {}
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime+0.5);
+    osc.start(); osc.stop(ctx.currentTime+0.5);
+  } catch(e){}
 }
-
-// Close modal on overlay click
-document.getElementById('cancel-modal').addEventListener('click', function(e) {
-  if (e.target === this) closeModal('cancel-modal');
-});
-
-// Enter key on api input
 document.getElementById('api-key-input').addEventListener('keydown', e => {
-  if (e.key === 'Enter') connectApi();
+  if (e.key==='Enter') connectApi();
 });
 </script>
 </body>
 </html>
-
