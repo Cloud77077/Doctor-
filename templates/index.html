@@ -201,16 +201,13 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:1
 .modal-actions{display:flex;gap:8px;flex-wrap:wrap;}
 .modal-actions .btn{flex:1;justify-content:center;}
 
-/* OTP SERVICE service grid */
-.os-service-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px;}
-.os-svc-card{background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius);padding:12px 10px;text-align:center;cursor:pointer;transition:all .15s;position:relative;}
-.os-svc-card:hover{border-color:var(--accent);background:var(--greenlt);}
-.os-svc-card.selected{border-color:var(--green);background:var(--greenlt);}
-.os-svc-card .os-icon{font-size:24px;margin-bottom:5px;}
-.os-svc-card .os-name{font-size:13px;font-weight:700;color:var(--text);}
-.os-svc-card .os-code{font-size:11px;color:var(--muted);font-family:monospace;margin-top:2px;}
-.os-svc-card .os-chk{position:absolute;top:5px;right:7px;color:var(--green);font-size:14px;display:none;}
-.os-svc-card.selected .os-chk{display:block;}
+/* OTP SERVICE code input */
+.os-code-card{background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius);padding:16px;}
+.os-code-card label{display:block;font-size:13px;font-weight:600;color:var(--muted);margin-bottom:8px;}
+.os-code-input{width:100%;border:1.5px solid var(--border);background:var(--bg);border-radius:var(--radius);padding:10px 13px;font-size:15px;outline:none;transition:border-color .15s;font-family:monospace;}
+.os-code-input:focus{border-color:var(--accent);}
+.os-code-hint{font-size:11px;color:var(--muted);margin-top:7px;}
+.os-code-hint span{font-family:monospace;background:var(--surface2);border:1px solid var(--border);border-radius:4px;padding:1px 5px;margin:2px;display:inline-block;}
 
 @media(max-width:480px){
   .num-phone{font-size:16px;}
@@ -359,16 +356,20 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:1
 
     <!-- BUY -->
     <div class="panel active" id="os-panel-buy">
-      <div class="section-head"><h3>Select Service</h3></div>
-      <div class="search-wrap">
-        <span class="si">🔍</span>
-        <input type="text" id="os-search" placeholder="Search services…" oninput="osFilterServices()">
-      </div>
-      <div class="os-service-grid" id="os-svc-grid"></div>
+      <div class="section-head"><h3>Buy Number</h3></div>
 
-      <div class="buy-panel" id="os-buy-panel" style="margin-top:14px;">
+      <div class="os-code-card" style="margin-bottom:14px;">
+        <label>Service Code</label>
+        <input type="text" class="os-code-input" id="os-service-code" placeholder="e.g. jio, wa, tg, go…" autocomplete="off" spellcheck="false" oninput="osOnCodeInput()">
+        <div class="os-code-hint">
+          Common codes:
+          <span>jio</span><span>wa</span><span>tg</span><span>go</span><span>ig</span><span>fb</span><span>tw</span><span>yt</span><span>am</span><span>fl</span>
+        </div>
+      </div>
+
+      <div class="buy-panel" id="os-buy-panel">
         <h4>Purchase Number</h4>
-        <div class="buy-sel-name" id="os-buy-sel">No service selected</div>
+        <div class="buy-sel-name" id="os-buy-sel">Enter a service code above</div>
         <div class="buy-row">
           <button class="btn btn-blue" onclick="osBuyNumber()">⚡ Buy Now</button>
         </div>
@@ -431,7 +432,6 @@ let odAutoOn       = false;
 let odAutoTimer    = null;
 
 // OTP Service state
-let osAllServices  = [];
 let osSelected     = null;
 let osAutoOn       = false;
 let osAutoTimer    = null;
@@ -442,40 +442,6 @@ let pollingMap     = {};
 let timerMap       = {};
 let pendingCancel  = null;
 let toastTmr       = null;
-
-// OTP Service hardcoded services (loaded from well-known codes)
-const OS_SERVICES = [
-  {code:'jio',  name:'Jio',         icon:'📶'},
-  {code:'wa',   name:'WhatsApp',    icon:'💬'},
-  {code:'tg',   name:'Telegram',    icon:'✈️'},
-  {code:'go',   name:'Google',      icon:'🔵'},
-  {code:'ig',   name:'Instagram',   icon:'📸'},
-  {code:'fb',   name:'Facebook',    icon:'👤'},
-  {code:'tw',   name:'Twitter/X',   icon:'🐦'},
-  {code:'yt',   name:'YouTube',     icon:'▶️'},
-  {code:'am',   name:'Amazon',      icon:'📦'},
-  {code:'fl',   name:'Flipkart',    icon:'🛍️'},
-  {code:'az',   name:'Azure',       icon:'☁️'},
-  {code:'li',   name:'LinkedIn',    icon:'💼'},
-  {code:'snap', name:'Snapchat',    icon:'👻'},
-  {code:'tt',   name:'TikTok',      icon:'🎵'},
-  {code:'uber', name:'Uber',        icon:'🚗'},
-  {code:'ola',  name:'Ola',         icon:'🟢'},
-  {code:'nf',   name:'Netflix',     icon:'🎬'},
-  {code:'sp',   name:'Spotify',     icon:'🎧'},
-  {code:'py',   name:'PayTM',       icon:'💳'},
-  {code:'ph',   name:'PhonePe',     icon:'📱'},
-  {code:'gpay', name:'Google Pay',  icon:'💰'},
-  {code:'sw',   name:'Swiggy',      icon:'🍔'},
-  {code:'zm',   name:'Zomato',      icon:'🍕'},
-  {code:'ms',   name:'Microsoft',   icon:'🪟'},
-  {code:'ap',   name:'Apple',       icon:'🍎'},
-  {code:'vk',   name:'VK',          icon:'🔷'},
-  {code:'ok',   name:'OK.ru',       icon:'🟠'},
-  {code:'mm',   name:'MakeMyTrip',  icon:'✈'},
-  {code:'ixg',  name:'IRCTC',       icon:'🚂'},
-  {code:'bn',   name:'Byju\'s',     icon:'📚'},
-];
 
 // ══ INIT ════════════════════════════════════════════════════════
 window.onload = () => {
@@ -557,7 +523,6 @@ function showApp() {
     odLoadCountries();
     renderOdOrders();
   } else {
-    osRenderServices();
     renderOsOrders();
   }
 
@@ -926,42 +891,18 @@ function renderOdOrders() {
 // OTP SERVICE
 // ══════════════════════════════════════════════════════════════════
 
-function osRenderServices() {
-  osAllServices = [...OS_SERVICES];
-  osFilterServices();
-}
-
-function osFilterServices() {
-  const q = document.getElementById('os-search').value.toLowerCase();
-  const list = osAllServices.filter(s =>
-    s.name.toLowerCase().includes(q) || s.code.toLowerCase().includes(q)
-  );
-  const grid = document.getElementById('os-svc-grid');
-  grid.innerHTML = '';
-  if (!list.length) {
-    grid.innerHTML = '<div class="empty"><div class="emoji">🔍</div><p>No services found.</p></div>';
-    return;
+function osOnCodeInput() {
+  const code = document.getElementById('os-service-code').value.trim();
+  if (code) {
+    osSelected = { code, name: code.toUpperCase() };
+    document.getElementById('os-buy-panel').classList.add('visible');
+    document.getElementById('os-buy-sel').textContent = `Service code: ${code}`;
+    document.getElementById('os-auto-card').classList.add('visible');
+  } else {
+    osSelected = null;
+    document.getElementById('os-buy-panel').classList.remove('visible');
+    document.getElementById('os-auto-card').classList.remove('visible');
   }
-  list.forEach(s => {
-    const c = document.createElement('div');
-    c.className = 'os-svc-card' + (osSelected && osSelected.code === s.code ? ' selected' : '');
-    c.onclick = () => osSelectService(s, c);
-    c.innerHTML = `
-      <div class="os-chk">✓</div>
-      <div class="os-icon">${s.icon}</div>
-      <div class="os-name">${esc(s.name)}</div>
-      <div class="os-code">${esc(s.code)}</div>`;
-    grid.appendChild(c);
-  });
-}
-
-function osSelectService(s, card) {
-  document.querySelectorAll('#os-svc-grid .os-svc-card').forEach(c => c.classList.remove('selected'));
-  card.classList.add('selected');
-  osSelected = s;
-  document.getElementById('os-buy-panel').classList.add('visible');
-  document.getElementById('os-buy-sel').textContent = `${s.name} (service code: ${s.code})`;
-  document.getElementById('os-auto-card').classList.add('visible');
 }
 
 async function osBuyNumber() {
