@@ -1,83 +1,131 @@
-from flask import Flask, render_template, request, jsonify, session
+from flask import Flask, render_template, request, jsonify
 import requests
 import os
+import threading
+import time
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "otpdoctor-secret-2026")
 
-BASE_URL = "https://otpdoctor.in/stubs/handler_api.php"
+OTPDOCTOR_BASE = "https://otpdoctor.in/stubs/handler_api.php"
+OTPSERVICE_BASE = "https://admin.otpservice.xyz/stubs/handler_api.php"
 
-def api_call(params):
+
+def api_get(url, params, timeout=15):
     try:
-        r = requests.get(BASE_URL, params=params, timeout=15)
+        r = requests.get(url, params=params, timeout=timeout)
         r.raise_for_status()
-        # Try JSON first
         try:
             return {"ok": True, "data": r.json()}
         except Exception:
-            return {"ok": True, "raw": r.text}
+            return {"ok": True, "raw": r.text.strip()}
     except requests.exceptions.Timeout:
         return {"ok": False, "error": "Request timed out"}
     except requests.exceptions.RequestException as e:
         return {"ok": False, "error": str(e)}
 
 
+# ── PING (keep-alive) ─────────────────────────────────────────────
+@app.route("/ping")
+def ping():
+    return "ok", 200
+
+
+# ── MAIN PAGE ─────────────────────────────────────────────────────
 @app.route("/")
 def index():
     return render_template("index.html")
 
 
-@app.route("/api/balance")
-def balance():
+# ═══════════════════════════════════════════════════════════════════
+# OTP DOCTOR ROUTES
+# ═══════════════════════════════════════════════════════════════════
+
+@app.route("/od/balance")
+def od_balance():
     key = request.args.get("api_key", "")
-    if not key:
-        return jsonify({"ok": False, "error": "No API key"})
-    result = api_call({"action": "getBalance", "api_key": key})
-    return jsonify(result)
+    return jsonify(api_get(OTPDOCTOR_BASE, {"action": "getBalance", "api_key": key}))
 
 
-@app.route("/api/countries")
-def countries():
+@app.route("/od/countries")
+def od_countries():
     key = request.args.get("api_key", "")
-    result = api_call({"action": "getCountries", "api_key": key})
-    return jsonify(result)
+    return jsonify(api_get(OTPDOCTOR_BASE, {"action": "getCountries", "api_key": key}))
 
 
-@app.route("/api/services")
-def services():
+@app.route("/od/services")
+def od_services():
     key = request.args.get("api_key", "")
     country = request.args.get("country", "in")
-    result = api_call({"action": "getServices", "api_key": key, "country": country})
-    return jsonify(result)
+    return jsonify(api_get(OTPDOCTOR_BASE, {"action": "getServices", "api_key": key, "country": country}))
 
 
-@app.route("/api/buy")
-def buy():
+@app.route("/od/buy")
+def od_buy():
     key = request.args.get("api_key", "")
     service = request.args.get("service", "")
     max_price = request.args.get("maxPrice", "")
     params = {"action": "getNumber", "api_key": key, "service": service}
     if max_price:
         params["maxPrice"] = max_price
-    result = api_call(params)
-    return jsonify(result)
+    return jsonify(api_get(OTPDOCTOR_BASE, params))
 
 
-@app.route("/api/status")
-def check_status():
+@app.route("/od/status")
+def od_status():
     key = request.args.get("api_key", "")
-    activation_id = request.args.get("id", "")
-    result = api_call({"action": "getStatus", "api_key": key, "id": activation_id})
-    return jsonify(result)
+    aid = request.args.get("id", "")
+    return jsonify(api_get(OTPDOCTOR_BASE, {"action": "getStatus", "api_key": key, "id": aid}))
 
 
-@app.route("/api/set_status")
-def set_status():
+@app.route("/od/set_status")
+def od_set_status():
     key = request.args.get("api_key", "")
-    activation_id = request.args.get("id", "")
+    aid = request.args.get("id", "")
     status = request.args.get("status", "")
-    result = api_call({"action": "setStatus", "api_key": key, "id": activation_id, "status": status})
-    return jsonify(result)
+    return jsonify(api_get(OTPDOCTOR_BASE, {"action": "setStatus", "api_key": key, "id": aid, "status": status}))
+
+
+# ═══════════════════════════════════════════════════════════════════
+# OTP SERVICE ROUTES
+# ═══════════════════════════════════════════════════════════════════
+
+@app.route("/os/buy")
+def os_buy():
+    key = request.args.get("api_key", "")
+    service = request.args.get("service", "")
+    return jsonify(api_get(OTPSERVICE_BASE, {"action": "getNumber", "api_key": key, "service": service}))
+
+
+@app.route("/os/otp")
+def os_otp():
+    key = request.args.get("api_key", "")
+    tid = request.args.get("transactionId", "")
+    return jsonify(api_get(OTPSERVICE_BASE, {"action": "getOtp", "api_key": key, "transactionId": tid}))
+
+
+@app.route("/os/cancel")
+def os_cancel():
+    key = request.args.get("api_key", "")
+    tid = request.args.get("transactionId", "")
+    return jsonify(api_get(OTPSERVICE_BASE, {"action": "cancelNumber", "api_key": key, "transactionId": tid}))
+
+
+# ── KEEP-ALIVE THREAD ─────────────────────────────────────────────
+def keep_alive():
+    time.sleep(30)
+    while True:
+        try:
+            url = os.environ.get("APP_URL", "")
+            if url:
+                requests.get(url.rstrip("/") + "/ping", timeout=10)
+        except Exception:
+            pass
+        time.sleep(240)
+
+
+t = threading.Thread(target=keep_alive, daemon=True)
+t.start()
 
 
 if __name__ == "__main__":
